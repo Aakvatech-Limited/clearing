@@ -10,7 +10,7 @@ class ClearingFile(Document):
 
     def before_submit(self):
         # On submit, enforce that all required documents are attached
-        self.ensure_all_documents_attached()
+        ensure_all_documents_attached(self,"clearing_file_document")
         if self.status != "Cleared" or "Delivered" :
             frappe.throw(_("You can't Submit if Clearing file status is not Cleared"))
 
@@ -31,27 +31,32 @@ class ClearingFile(Document):
         else:
             pass
 
-    def ensure_all_documents_attached(self):
-        # Required documents for "Pre-Lodged" status
-        required_docs = ['Packing List', 'Commercial Invoice']
-
-        # Depending on the mode of transport, check for the specific document
-        if self.mode_of_transport == 'Sea':
-            required_docs.append('Bill of Lading B/L')
-        elif self.mode_of_transport == 'Air':
-            required_docs.append('Air Waybill (AWB)')
+def ensure_all_documents_attached(self,type):
+        # Fetch required documents for "Pre-Lodged" status from "Mode of Transport Detail"
+        required_docs = frappe.db.get_all(
+            "Mode of Transport Detail",
+            filters={
+                "parentfield": type,
+                'parent':self.mode_of_transport
+            },
+            fields=['clearing_document_type']
+        )
+        frappe.throw(str(required_docs))
+        # Convert list of dictionaries into a simple list of document names
+        required_doc_names = [doc['clearing_document_type'] for doc in required_docs]
 
         # Check if each required document is present in the Clearing File's child table 'documents'
         missing_docs = []
-        for doc_name in required_docs:
+        for doc_name in required_doc_names:
             exists = any(doc.document_name == doc_name for doc in self.document)
             if not exists:
                 missing_docs.append(doc_name)
-
         # If documents are missing, prevent submission
         if missing_docs:
             missing_docs_str = ', '.join(missing_docs)
-            frappe.throw(_('The following required documents are missing and must be attached before submission: {0}').format(missing_docs_str), frappe.ValidationError)
+            frappe.throw(_('The following required documents are missing and must be attached before submission: {0}')
+                        .format(missing_docs_str), frappe.ValidationError)
+
 
 @frappe.whitelist()
 def get_address_display_from_link(doctype, name):

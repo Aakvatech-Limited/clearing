@@ -3,7 +3,7 @@
 
 frappe.ui.form.on('Port Clearance', {
 	refresh: function(frm) {
-        
+ 
         // Function to handle the creation or redirection of documents
         const container = document.querySelector('[data-fieldname="attach_documents"]');
 
@@ -16,8 +16,9 @@ frappe.ui.form.on('Port Clearance', {
                 button.className = 'btn btn-xs btn-default bold btn-primary';
             }
         }
+    },
 
-	},
+	
 
     attach_documents: function(frm) {
         // Create the dialog for document attachment

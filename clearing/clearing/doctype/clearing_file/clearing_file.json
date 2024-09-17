@@ -91,10 +91,10 @@
   },
   {
    "fieldname": "mode_of_transport",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Mode of Transport",
-   "options": "Sea\nAir\nLand"
+   "options": "Mode of Transport"
   },
   {
    "fieldname": "arrival_date",
@@ -330,13 +330,14 @@
   {
    "fieldname": "cargo_location",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Cargo Location"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-11 10:07:41.607821",
+ "modified": "2024-09-17 14:23:15.815803",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

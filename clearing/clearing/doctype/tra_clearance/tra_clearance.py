@@ -4,13 +4,17 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
 
 class TRAClearance(Document):
 
     def before_submit(self):
+         ensure_all_documents_attached(self,"tra_clearance_document")
+         
          if self.status != "Payment Completed":
              frappe.throw(_("You can't Submit if Payment Completed  is not Completed"))
-
+            
+    
     def validate(self):
         self.check_required_documents()
 

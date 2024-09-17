@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-17 09:40:45.578786",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "truck_number",
+  "driver_name",
+  "driver_license_number"
+ ],
+ "fields": [
+  {
+   "fieldname": "truck_number",
+   "fieldtype": "Data",
+   "label": "Truck Number"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "driver_license_number",
+   "fieldtype": "Data",
+   "label": "Driver\u2019s License Number"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-09-17 14:01:57.381426",
+ "modified_by": "Administrator",
+ "module": "Clearing",
+ "name": "Truck Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

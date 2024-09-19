@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestShipmentVessel(FrappeTestCase):
+class TestCFDeliveryNote(FrappeTestCase):
 	pass

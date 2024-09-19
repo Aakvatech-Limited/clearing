@@ -8,22 +8,29 @@
  "field_order": [
   "clearing_file",
   "column_break_uyof8",
+  "posting_date",
   "verification_status",
+  "status",
   "verification_section",
   "consignee",
   "consignee_address",
   "address_display",
-  "paid_by_clearing_agent",
   "release_order_date",
   "column_break_ccdqe",
   "inspection_date",
   "verification_location",
   "total_charges_section",
   "total_charges",
+  "column_break_ktifs",
+  "invoice_paid",
+  "paid_by_clearing_agent",
   "field_department_section",
   "staff_id",
   "column_break_cma1x",
   "staff_name",
+  "document_section_section",
+  "attach_documents",
+  "document",
   "additional_notes_section",
   "notes",
   "column_break_c45ta",
@@ -48,7 +55,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Verification Status",
-   "options": "Pending\nCompleted"
+   "options": "Pending\nCompleted",
+   "read_only": 1
   },
   {
    "fieldname": "additional_notes_section",
@@ -171,12 +179,53 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Release Order Date"
+  },
+  {
+   "fieldname": "column_break_ktifs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice_paid",
+   "fieldtype": "Check",
+   "label": "Invoice Paid"
+  },
+  {
+   "fieldname": "document_section_section",
+   "fieldtype": "Section Break",
+   "label": "Document Section"
+  },
+  {
+   "fieldname": "attach_documents",
+   "fieldtype": "Button",
+   "label": "Attach Documents"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "bold": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Payment Pending\nPayment Completed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "document",
+   "fieldtype": "Table",
+   "options": "Physical Verification Document",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-12 16:58:00.736816",
+ "modified": "2024-09-19 14:29:34.927592",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

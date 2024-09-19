@@ -12,7 +12,8 @@
   "clearing_file_document",
   "tra_clearance_document",
   "shipment_clearance_document",
-  "port_clearance_document"
+  "port_clearance_document",
+  "physical_verification_document"
  ],
  "fields": [
   {
@@ -46,11 +47,17 @@
    "fieldtype": "Table",
    "label": "Port Clearance Document",
    "options": "Mode of Transport Detail"
+  },
+  {
+   "fieldname": "physical_verification_document",
+   "fieldtype": "Table",
+   "label": "Physical Verification Document",
+   "options": "Mode of Transport Detail"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-17 14:26:10.836288",
+ "modified": "2024-09-19 13:12:33.122796",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Mode of Transport",

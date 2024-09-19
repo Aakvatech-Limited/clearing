@@ -14,7 +14,13 @@ def populate_document_in_parent(doc):
     parent_doctype_map = {
         "Clearing File": {
             "doctype": "Clearing File",
-            "child_table": "document"
+            "child_table": "document",
+            "link_field": "clearing_file"
+        },
+        "Physical Verification": {
+            "doctype": "Physical Verification",
+            "child_table": "document",
+            "link_field": "clearing_file"
         },
         "TRA Clearance": {
             "doctype": "TRA Clearance",
@@ -36,7 +42,7 @@ def populate_document_in_parent(doc):
     parent_config = parent_doctype_map.get(doc.linked_file)
 
     if parent_config:
-        if parent_config['doctype'] == "Clearing File":
+        if parent_config == "Clearing File":
             parent_doc = frappe.get_doc(parent_config['doctype'], doc.clearing_file)
         else:
             parent_doc = frappe.get_doc(parent_config['doctype'], {parent_config['link_field']: doc.clearing_file})

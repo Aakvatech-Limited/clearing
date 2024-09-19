@@ -11,22 +11,14 @@
   "customer",
   "mode_of_transport",
   "column_break_yxf5j",
+  "posting_date",
   "status",
-  "paid_by_clearing_agent",
-  "staff_id",
-  "staff_name",
   "total_charges_section",
   "total_charges",
-  "tancis_section_section",
-  "tancis_lodging_date",
-  "resubmission_date",
   "column_break_7tyvu",
-  "accepted",
-  "tancis_completion_date",
-  "tansad_reference_number",
+  "paid_by_clearing_agent",
+  "invoice_paid",
   "document_section_section",
-  "column_break_3gv7k",
-  "column_break_dnwph",
   "attach_documents",
   "section_break_lps6b",
   "document",
@@ -118,14 +110,6 @@
    "label": "Paid By Clearing Agent"
   },
   {
-   "fieldname": "column_break_3gv7k",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_dnwph",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "attach_documents",
    "fieldtype": "Button",
    "label": "Attach Documents"
@@ -135,20 +119,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "staff_id",
-   "fieldtype": "Link",
-   "label": "Staff ID",
-   "options": "Employee"
-  },
-  {
-   "fetch_from": "staff_id.employee_name",
-   "fieldname": "staff_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Staff Name",
-   "read_only": 1
-  },
-  {
    "fetch_from": "clearing_file.mode_of_transport",
    "fieldname": "mode_of_transport",
    "fieldtype": "Data",
@@ -156,42 +126,8 @@
    "label": "Mode of Transport"
   },
   {
-   "fieldname": "tancis_section_section",
-   "fieldtype": "Section Break",
-   "label": "TANCIS Section"
-  },
-  {
-   "fieldname": "tancis_lodging_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "TANCIS Lodging Date"
-  },
-  {
-   "description": "if appealed",
-   "fieldname": "resubmission_date",
-   "fieldtype": "Date",
-   "label": " Resubmission Date"
-  },
-  {
    "fieldname": "column_break_7tyvu",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "accepted",
-   "fieldtype": "Check",
-   "label": "Accepted"
-  },
-  {
-   "fieldname": "tancis_completion_date",
-   "fieldtype": "Date",
-   "label": "TANCIS Completion Date"
-  },
-  {
-   "fieldname": "tansad_reference_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": " TANSAD reference number"
   },
   {
    "fieldname": "total_charges_section",
@@ -203,12 +139,24 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total charges"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice_paid",
+   "fieldtype": "Check",
+   "label": "Invoice Paid"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-02 11:11:45.350198",
+ "modified": "2024-09-19 10:35:13.267956",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

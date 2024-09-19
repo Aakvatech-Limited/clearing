@@ -9,12 +9,10 @@
  "engine": "InnoDB",
  "field_order": [
   "clearing_file",
-  "delivery_date",
-  "delivery_note",
+  "cf_delivery_note",
   "column_break_dfl0o",
   "consignee",
   "status",
-  "paid_by_clearing_agent",
   "consignee_address",
   "staff_section",
   "staff_id",
@@ -22,17 +20,11 @@
   "staff_name",
   "total_charges_section",
   "total_charges",
-  "column_break_ayxk7",
   "container_deposit_amount",
-  "truck_announcement_details_section",
-  "exporter_type",
-  "column_break_afkf1",
-  "sub_contact_company",
-  "section_break_atdcp",
-  "truck_detail",
+  "column_break_ayxk7",
+  "paid_by_clearing_agent",
+  "invoice_paid",
   "document_section_section",
-  "column_break_hpllj",
-  "column_break_mmpbf",
   "attach_documents",
   "section_break_muabn",
   "document",
@@ -60,11 +52,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "truck_announcement_details_section",
-   "fieldtype": "Section Break",
-   "label": "Truck Announcement Details"
-  },
-  {
    "fieldname": "column_break_dfl0o",
    "fieldtype": "Column Break"
   },
@@ -77,13 +64,8 @@
    "fieldname": "document",
    "fieldtype": "Table",
    "label": "Document",
-   "options": "Port clearance Document"
-  },
-  {
-   "fieldname": "exporter_type",
-   "fieldtype": "Select",
-   "label": "Exporter Type",
-   "options": "In House\nSub-Contract"
+   "options": "Port clearance Document",
+   "read_only": 1
   },
   {
    "fetch_from": "clearing_file.customer",
@@ -101,13 +83,6 @@
    "fieldtype": "Small Text",
    "label": "Consignee Address",
    "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.exporter_type=='Sub-Contract'\n",
-   "fieldname": "sub_contact_company",
-   "fieldtype": "Link",
-   "label": "Sub-contact Company ",
-   "options": "Transporter"
   },
   {
    "fieldname": "staff_id",
@@ -129,18 +104,13 @@
    "label": "Paid By Clearing Agent"
   },
   {
+   "bold": 1,
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
-   "options": "Unpaid\nPaid"
-  },
-  {
-   "fieldname": "column_break_hpllj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_mmpbf",
-   "fieldtype": "Column Break"
+   "options": "Payment Pending\nPayment Completed",
+   "read_only": 1
   },
   {
    "fieldname": "attach_documents",
@@ -177,37 +147,28 @@
   {
    "fieldname": "container_deposit_amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Container Deposit Amount"
   },
   {
-   "fieldname": "delivery_date",
-   "fieldtype": "Date",
-   "label": "Delivery Date "
+   "default": "0",
+   "fieldname": "invoice_paid",
+   "fieldtype": "Check",
+   "label": "Invoice Paid"
   },
   {
-   "fieldname": "delivery_note",
+   "fieldname": "cf_delivery_note",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Delivery Note",
-   "options": "Delivery Note"
-  },
-  {
-   "fieldname": "truck_detail",
-   "fieldtype": "Table",
-   "options": "Truck Detail"
-  },
-  {
-   "fieldname": "column_break_afkf1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_atdcp",
-   "fieldtype": "Section Break"
+   "options": "CF Delivery Note",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-17 14:03:29.089055",
+ "modified": "2024-09-19 17:10:19.647966",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

@@ -66,7 +66,7 @@ frappe.ui.form.on('Clearing File', {
             handle_clearance_creation(
                 'Physical Verification', 'Physical Verification',
                 { clearing_file: frm.doc.name },
-                { doctype: 'Physical Verification', clearing_file: frm.doc.name, customer: frm.doc.customer, status: 'Pending' },
+                { doctype: 'Physical Verification', clearing_file: frm.doc.name, customer: frm.doc.customer, status: 'Payment Pending' },
                 'Physical Verification created successfully'
             );
 

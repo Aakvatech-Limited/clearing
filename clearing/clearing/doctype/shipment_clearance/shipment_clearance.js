@@ -35,7 +35,7 @@ function handleDocumentExpiry(frm) {
         frm.set_intro(`
             <div style="padding: 15px; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; color: #721c24; font-size: 14px;">
                 <strong>Important Notice:</strong><br>
-                This document is <strong>expired</strong> as of <strong>${expiryDate.toLocaleDateString()}</strong>.
+                Delivery Order Attached is <strong>expired</strong> as of <strong>${expiryDate.toLocaleDateString()}</strong>.
                 Please take the necessary actions.
             </div>
         `, 'red');
@@ -45,7 +45,7 @@ function handleDocumentExpiry(frm) {
         frm.set_intro(`
             <div style="padding: 15px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; color: #856404; font-size: 14px;">
                 <strong>Reminder:</strong><br>
-                This document will <strong>expire</strong> tomorrow on <strong>${expiryDate.toLocaleDateString()}</strong>.
+                Delivery Order Attached will <strong>expire</strong> tomorrow on <strong>${expiryDate.toLocaleDateString()}</strong>.
                 Please take the necessary actions.
             </div>
         `, 'yellow');

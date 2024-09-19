@@ -14,15 +14,14 @@
   "column_break_a2owv",
   "posting_date",
   "status",
-  "paid_by_clearing_agent",
-  "invoice_paid",
   "staff_id",
   "staff_name",
   "total_charges_section",
   "total_charges",
+  "column_break_r0s5o",
+  "paid_by_clearing_agent",
+  "invoice_paid",
   "section_break_keyml",
-  "column_break_u9iyv",
-  "column_break_zhir1",
   "attach_documents",
   "section_break_uevyo",
   "document",
@@ -35,9 +34,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Clearing File",
-   "no_copy": 1,
    "options": "Clearing File",
-   "unique": 1
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -50,10 +48,13 @@
    "search_index": 1
   },
   {
+   "bold": 1,
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
-   "options": "Unpaid\nPaid"
+   "options": "Payment Pending\nPayment Completed",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_keyml",
@@ -82,21 +83,14 @@
    "fieldname": "document",
    "fieldtype": "Table",
    "label": "Document",
-   "options": "Ship clearance Document"
+   "options": "Ship clearance Document",
+   "read_only": 1
   },
   {
    "default": "0",
    "fieldname": "paid_by_clearing_agent",
    "fieldtype": "Check",
    "label": "Paid By Clearing Agent"
-  },
-  {
-   "fieldname": "column_break_u9iyv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_zhir1",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "attach_documents",
@@ -140,6 +134,10 @@
    "label": "Total Charges"
   },
   {
+   "fieldname": "column_break_r0s5o",
+   "fieldtype": "Column Break"
+  },
+  {
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
@@ -149,7 +147,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-12 16:51:06.136371",
+ "modified": "2024-09-19 11:40:31.151800",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipment Clearance",

@@ -35,7 +35,7 @@
    "fieldname": "linked_document",
    "fieldtype": "Select",
    "label": "Linked Document",
-   "options": "\nClearing File\nTRA Clearance\nShipment Clearance\nPort Clearance"
+   "options": "\nClearing File\nTRA Clearance\nPhysical Verification\nShipment Clearance\nPort Clearance"
   },
   {
    "fieldname": "section_break_gi9ev",
@@ -44,7 +44,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-23 12:47:56.545522",
+ "modified": "2024-09-19 13:16:25.244597",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Document Type",

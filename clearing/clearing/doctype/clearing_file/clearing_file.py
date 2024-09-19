@@ -41,7 +41,6 @@ def ensure_all_documents_attached(self,type):
             },
             fields=['clearing_document_type']
         )
-        frappe.throw(str(required_docs))
         # Convert list of dictionaries into a simple list of document names
         required_doc_names = [doc['clearing_document_type'] for doc in required_docs]
 

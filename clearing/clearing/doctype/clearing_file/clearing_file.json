@@ -29,6 +29,7 @@
   "airplane",
   "departure_date",
   "arrival_date",
+  "cargo_country_of_origin",
   "cargo_details_section",
   "cargo_details",
   "section_break_xl9ew",
@@ -140,7 +141,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Open\nPre-Lodged\nPayment Pending\nCleared\nDelivered",
+   "options": "Open\nPre-Lodged\nOn Process\nCleared\nDelivered",
    "read_only": 1
   },
   {
@@ -332,12 +333,20 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Cargo Location"
+  },
+  {
+   "fieldname": "cargo_country_of_origin",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Cargo Country of Origin",
+   "options": "Country",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-17 14:23:15.815803",
+ "modified": "2024-09-19 15:41:41.271460",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

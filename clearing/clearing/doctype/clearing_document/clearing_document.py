@@ -6,7 +6,7 @@ import frappe
 from frappe.model.document import Document
 
 class ClearingDocument(Document):
-    def before_save(self):
+    def after_insert(self):
         populate_document_in_parent(self)
 
 def populate_document_in_parent(self):

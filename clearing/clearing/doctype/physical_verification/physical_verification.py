@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
+from clearing.clearing.doctype.clearing_file.clearing_file import update_status_to_cleared
 
 class PhysicalVerification(Document):
     
@@ -30,6 +31,10 @@ class PhysicalVerification(Document):
         # Ensure verification is marked as completed
         if self.verification_status != "Completed":
             frappe.throw(_("You can't submit unless verification is completed."))
+
+
+    def after_submit(self):
+        update_status_to_cleared(self.clearing_file)
 
     def validate_status(self):
         """Ensure both payment and verification statuses are completed before submission."""

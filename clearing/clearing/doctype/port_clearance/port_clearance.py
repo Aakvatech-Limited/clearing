@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from clearing.clearing.doctype.clearing_file.clearing_file import update_status_to_cleared
 
 class PortClearance(Document):
 
@@ -30,6 +31,10 @@ class PortClearance(Document):
         # Check if all required documents are attached
         ensure_all_documents_attached(self, "port_clearance_document")
 
+    def after_submit(self):
+        update_status_to_cleared(self.clearing_file)
+
+        
 def ensure_all_documents_attached(self, type):
     """Ensure all required documents for the current mode of transport are attached."""
     # Fetch required documents for the given mode of transport

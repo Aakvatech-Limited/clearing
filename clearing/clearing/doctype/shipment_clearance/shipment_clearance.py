@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
+from clearing.clearing.doctype.clearing_file.clearing_file import update_status_to_cleared
 
 class ShipmentClearance(Document):
 
@@ -27,6 +28,9 @@ class ShipmentClearance(Document):
 
         # Validate payment status before submission
         self.validate_payment_status()
+
+    def after_submit(self):
+        update_status_to_cleared(self.clearing_file)
 
     def validate_payment_status(self):
         """Ensure payment status is 'Payment Completed' before submission."""

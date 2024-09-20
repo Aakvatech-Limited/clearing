@@ -71,3 +71,34 @@ def get_address_display_from_link(doctype, name):
     address_display = get_address_display(address.as_dict())
     
     return {"address_display": address_display, "customer_address": addresses[0].name}
+
+
+@frappe.whitelist()
+def update_status_to_cleared(clearing_file_name):
+    # List of related doctypes to check submission status
+    related_doctypes = [
+        {"doctype": "TRA Clearance", "link_field": "clearing_file"},
+        {"doctype": "Shipment Clearance", "link_field": "clearing_file"},
+        {"doctype": "Physical Verification", "link_field": "clearing_file"},
+        {"doctype": "Port Clearance", "link_field": "clearing_file"}
+    ]
+
+    # Check if all related documents for the clearing file are submitted
+    for doc in related_doctypes:
+        # Query to check if there are any documents that are not submitted
+        not_submitted_docs = frappe.get_all(doc["doctype"],
+                                            filters={doc["link_field"]: clearing_file_name, 'docstatus': ['!=', 1]})
+
+        if not_submitted_docs:
+            return  # Do nothing if any related document is not submitted
+
+    # If all related documents are submitted, get the Clearing File document
+    clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
+
+    # Only update the status if it is not already 'Cleared'
+    if clearing_file_doc.status != "Cleared":
+        clearing_file_doc.status = "Cleared"
+        clearing_file_doc.save()
+
+        # Print message only if the status has been changed
+        frappe.msgprint(f"Clearing File {clearing_file_name} status updated to 'Cleared'.")

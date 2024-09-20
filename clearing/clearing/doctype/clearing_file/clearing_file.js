@@ -26,6 +26,10 @@ frappe.ui.form.on('Clearing File', {
                         if (r.message && r.message.length > 0) {
                             // Redirect to the existing document if found
                             frappe.set_route('Form', doctype, r.message[0].name);
+
+                            // Update the status to 'On Process' when an existing document is found
+                            frm.set_value('status', 'On Process');
+                            frm.save_or_update(); // Save the form after setting the status
                         } else {
                             // Create a new document if it doesn't exist
                             frappe.call({
@@ -35,6 +39,10 @@ frappe.ui.form.on('Clearing File', {
                                     if (!r.exc) {
                                         frappe.msgprint(__(success_message));
                                         frappe.set_route('Form', doctype, r.message.name);
+
+                                        // Update the status to 'On Process' after the new document is created
+                                        frm.set_value('status', 'On Process');
+                                        frm.save_or_update(); // Save the form after setting the status
                                     }
                                 }
                             });
@@ -78,6 +86,7 @@ frappe.ui.form.on('Clearing File', {
                 'Port Clearance created successfully'
             );
         }
+
 
         // Update button types for custom actions
         ['TRA Clearance', 'Port Clearance', 'Physical Verification', 'Shipment Clearance'].forEach(action => {

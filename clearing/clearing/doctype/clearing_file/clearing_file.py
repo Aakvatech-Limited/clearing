@@ -83,12 +83,10 @@ def update_status_to_cleared(doc, method):
         {"doctype": "TRA Clearance", "link_field": "clearing_file"},
         {"doctype": "Shipment Clearance", "link_field": "clearing_file"},
         {"doctype": "Physical Verification", "link_field": "clearing_file"},
-        {"doctype": "Port Clearance", "link_field": "clearing_file"},
-        {"doctype": "CF Delivery Note", "link_field": "clearing_file"}
+        {"doctype": "Port Clearance", "link_field": "clearing_file"}
     ]
 
-    all_docs_submitted = True
-
+    # Check if all related documents for the clearing file are submitted
     for doc_type in related_doctypes:
 
         not_submitted_docs = frappe.get_all(
@@ -97,20 +95,11 @@ def update_status_to_cleared(doc, method):
         )
 
         if not_submitted_docs:
-            all_docs_submitted = False
-            break
+            return  
 
-    # Handle the special case for CF Delivery Note
-    if doc.doctype == "CF Delivery Note":
-        if all_docs_submitted:
-            doc.status = "Delivered"
-            doc.save()
-        return  
+    clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
 
-    if all_docs_submitted:
-        clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
-
-        if clearing_file_doc.status != "Cleared":
-            clearing_file_doc.status = "Cleared"
-            clearing_file_doc.save()
+    if clearing_file_doc.status != "Cleared":
+        clearing_file_doc.status = "Cleared"
+        clearing_file_doc.save()
 

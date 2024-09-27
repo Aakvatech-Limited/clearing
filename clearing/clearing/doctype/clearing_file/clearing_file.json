@@ -88,20 +88,23 @@
    "fieldname": "shipment_type",
    "fieldtype": "Select",
    "label": "Shipment Type",
-   "options": "Import\nExport"
+   "options": "Import\nExport",
+   "reqd": 1
   },
   {
    "fieldname": "mode_of_transport",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Mode of Transport",
-   "options": "Mode of Transport"
+   "options": "Mode of Transport",
+   "reqd": 1
   },
   {
    "fieldname": "arrival_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Arrival Date (ETA)"
+   "label": "Arrival Date (ETA)",
+   "reqd": 1
   },
   {
    "fieldname": "departure_date",
@@ -131,7 +134,8 @@
    "fieldname": "cargo_details",
    "fieldtype": "Table",
    "label": "Cargo Details",
-   "options": "Cargo"
+   "options": "Cargo",
+   "reqd": 1
   },
   {
    "fieldname": "status",
@@ -346,7 +350,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-19 15:41:41.271460",
+ "modified": "2024-09-25 18:56:04.504988",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

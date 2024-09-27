@@ -98,10 +98,8 @@
    "fieldname": "clearing_file",
    "fieldtype": "Link",
    "label": "Clearing File ",
-   "no_copy": 1,
    "options": "Clearing File",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "default": "0",
@@ -144,7 +142,7 @@
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Invoice Paid"
+   "label": "Charges Paid"
   },
   {
    "default": "Today",
@@ -156,7 +154,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-19 10:35:13.267956",
+ "modified": "2024-09-24 15:48:05.619888",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

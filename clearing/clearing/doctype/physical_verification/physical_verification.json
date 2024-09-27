@@ -188,7 +188,7 @@
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Invoice Paid"
+   "label": "Charges Paid"
   },
   {
    "fieldname": "document_section_section",
@@ -225,7 +225,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-19 14:29:34.927592",
+ "modified": "2024-09-24 15:38:41.318542",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

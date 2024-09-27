@@ -116,13 +116,20 @@ app_license = "MIT"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "TRA Clearance": {
+        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+    },
+    "Shipment Clearance": {
+        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+    },
+    "Physical Verification": {
+        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+    },
+    "Port Clearance": {
+        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+    }
+}
 
 # Scheduled Tasks
 # ---------------

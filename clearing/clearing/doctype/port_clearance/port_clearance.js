@@ -17,7 +17,7 @@ frappe.ui.form.on('Port Clearance', {
         }
 
         // Add button to generate CF Delivery Note if the status is "Payment Completed"
-        if (frm.doc.status === 'Payment Completed') {
+        if (frm.doc.status === 'Payment Completed' || frm.doc.docstatus === 0 ) {
             frm.add_custom_button(__('Generate CF Delivery Note'), function() {
                 // First, check if a CF Delivery Note already exists for the current clearing file
                 frappe.call({
@@ -57,7 +57,7 @@ frappe.ui.form.on('Port Clearance', {
                                         doctype: "CF Delivery Note",
                                         clearing_file: frm.doc.clearing_file,
                                         container_deposit_amount: frm.doc.container_deposit_amount,
-                                        // Add other fields you want to populate in the CF Delivery Note
+                                        posting_date : frappe.datetime.now_date()
                                     }
                                 },
                                 callback: function(response) {

@@ -27,7 +27,8 @@ class ClearingFile(Document):
         missing_fields = [field_name for field_name, field_value in required_fields.items() if not field_value]
 
         if not missing_fields:
-            self.status = 'Pre-Lodged'
+            if self.status == 'Open':
+                self.status = 'Pre-Lodged'
         else:
             pass
 
@@ -74,7 +75,9 @@ def get_address_display_from_link(doctype, name):
 
 
 @frappe.whitelist()
-def update_status_to_cleared(clearing_file_name):
+def update_status_to_cleared(doc, method):
+    clearing_file_name = doc.clearing_file 
+
     # List of related doctypes to check submission status
     related_doctypes = [
         {"doctype": "TRA Clearance", "link_field": "clearing_file"},
@@ -84,21 +87,19 @@ def update_status_to_cleared(clearing_file_name):
     ]
 
     # Check if all related documents for the clearing file are submitted
-    for doc in related_doctypes:
-        # Query to check if there are any documents that are not submitted
-        not_submitted_docs = frappe.get_all(doc["doctype"],
-                                            filters={doc["link_field"]: clearing_file_name, 'docstatus': ['!=', 1]})
+    for doc_type in related_doctypes:
+
+        not_submitted_docs = frappe.get_all(
+            doc_type["doctype"],
+            filters={doc_type["link_field"]: clearing_file_name, 'docstatus': 0}
+        )
 
         if not_submitted_docs:
-            return  # Do nothing if any related document is not submitted
+            return  
 
-    # If all related documents are submitted, get the Clearing File document
     clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
 
-    # Only update the status if it is not already 'Cleared'
     if clearing_file_doc.status != "Cleared":
         clearing_file_doc.status = "Cleared"
         clearing_file_doc.save()
 
-        # Print message only if the status has been changed
-        frappe.msgprint(f"Clearing File {clearing_file_name} status updated to 'Cleared'.")

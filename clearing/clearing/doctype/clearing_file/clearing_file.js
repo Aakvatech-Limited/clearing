@@ -24,12 +24,15 @@ frappe.ui.form.on('Clearing File', {
                     },
                     callback: function(r) {
                         if (r.message && r.message.length > 0) {
-                            // Redirect to the existing document if found
+
+                            frm.page.btn_primary && frm.page.btn_primary.hide();
+
                             frappe.set_route('Form', doctype, r.message[0].name);
 
-                            // Update the status to 'On Process' when an existing document is found
-                            frm.set_value('status', 'On Process');
-                            frm.save_or_update(); // Save the form after setting the status
+                            if (frm.doc.status === 'Pre-Lodged') {
+                                frm.set_value('status', 'On Process');
+                                frm.save_or_update(); 
+                            }
                         } else {
                             // Create a new document if it doesn't exist
                             frappe.call({
@@ -37,12 +40,15 @@ frappe.ui.form.on('Clearing File', {
                                 args: { doc: new_doc_data },
                                 callback: function(r) {
                                     if (!r.exc) {
+
+                                        frm.page.btn_primary && frm.page.btn_primary.hide();
                                         frappe.msgprint(__(success_message));
                                         frappe.set_route('Form', doctype, r.message.name);
 
-                                        // Update the status to 'On Process' after the new document is created
                                         frm.set_value('status', 'On Process');
-                                        frm.save_or_update(); // Save the form after setting the status
+                                         frm.page.btn_primary.hide();
+                                        frm.save_or_update(); 
+                                       
                                     }
                                 }
                             });
@@ -53,7 +59,7 @@ frappe.ui.form.on('Clearing File', {
         }
 
         // Only show buttons if status is 'Pre-Lodged'
-        if (frm.doc.status === 'Pre-Lodged') {
+        if (frm.doc.status === 'Pre-Lodged' || frm.doc.status === 'On Process'){
             // TRA Clearance
             handle_clearance_creation(
                 'TRA Clearance', 'TRA Clearance',

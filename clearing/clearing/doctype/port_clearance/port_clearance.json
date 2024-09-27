@@ -37,9 +37,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Clearing File",
-   "no_copy": 1,
-   "options": "Clearing File",
-   "unique": 1
+   "options": "Clearing File"
   },
   {
    "fieldname": "amended_from",
@@ -154,7 +152,7 @@
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Invoice Paid"
+   "label": "Charges Paid"
   },
   {
    "fieldname": "cf_delivery_note",
@@ -168,7 +166,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-20 08:52:02.258167",
+ "modified": "2024-09-24 15:49:42.908779",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

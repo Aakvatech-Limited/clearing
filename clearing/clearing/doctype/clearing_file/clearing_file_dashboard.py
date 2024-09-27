@@ -15,7 +15,7 @@ def get_data():
         "transactions": [
             {
                 "label": _("Clearance Processes"),
-                "items": ["TRA Clearance", "Physical Verification Booking", "Shipment Clearance", "Port Clearance"]
+                "items": ["TRA Clearance", "Physical Verification", "Shipment Clearance", "Port Clearance"]
             },
             {
                 "label": _("Attached Documents"),

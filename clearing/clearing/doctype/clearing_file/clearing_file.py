@@ -11,8 +11,8 @@ class ClearingFile(Document):
     def before_submit(self):
         # On submit, enforce that all required documents are attached
         ensure_all_documents_attached(self,"clearing_file_document")
-        if self.status != "Cleared" or "Delivered" :
-            frappe.throw(_("You can't Submit if Clearing file status is not Cleared"))
+        if self.status != "Delivered" :
+            frappe.throw(_("You can't Submit if Clearing file status is not Delivered"))
 
     def check_and_update_status(self):
         # Required fields for "Pre-Lodged" status
@@ -83,10 +83,12 @@ def update_status_to_cleared(doc, method):
         {"doctype": "TRA Clearance", "link_field": "clearing_file"},
         {"doctype": "Shipment Clearance", "link_field": "clearing_file"},
         {"doctype": "Physical Verification", "link_field": "clearing_file"},
-        {"doctype": "Port Clearance", "link_field": "clearing_file"}
+        {"doctype": "Port Clearance", "link_field": "clearing_file"},
+        {"doctype": "CF Delivery Note", "link_field": "clearing_file"}
     ]
 
-    # Check if all related documents for the clearing file are submitted
+    all_docs_submitted = True
+
     for doc_type in related_doctypes:
 
         not_submitted_docs = frappe.get_all(
@@ -95,11 +97,20 @@ def update_status_to_cleared(doc, method):
         )
 
         if not_submitted_docs:
-            return  
+            all_docs_submitted = False
+            break
 
-    clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
+    # Handle the special case for CF Delivery Note
+    if doc.doctype == "CF Delivery Note":
+        if all_docs_submitted:
+            doc.status = "Delivered"
+            doc.save()
+        return  
 
-    if clearing_file_doc.status != "Cleared":
-        clearing_file_doc.status = "Cleared"
-        clearing_file_doc.save()
+    if all_docs_submitted:
+        clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
+
+        if clearing_file_doc.status != "Cleared":
+            clearing_file_doc.status = "Cleared"
+            clearing_file_doc.save()
 

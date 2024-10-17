@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Port Clearance', {
-    refresh: function(frm) {
+    refresh: function (frm) {
         // Function to handle the creation or redirection of documents
         const container = document.querySelector('[data-fieldname="attach_documents"]');
 
@@ -17,8 +17,8 @@ frappe.ui.form.on('Port Clearance', {
         }
 
         // Add button to generate CF Delivery Note if the status is "Payment Completed"
-        if (frm.doc.status === 'Payment Completed' || frm.doc.docstatus === 0 ) {
-            frm.add_custom_button(__('Generate CF Delivery Note'), function() {
+        if (frm.doc.status === 'Payment Completed' || frm.doc.docstatus === 0) {
+            frm.add_custom_button(__('Generate CF Delivery Note'), function () {
                 // First, check if a CF Delivery Note already exists for the current clearing file
                 frappe.call({
                     method: "frappe.client.get_list",
@@ -29,12 +29,12 @@ frappe.ui.form.on('Port Clearance', {
                         },
                         fields: ["name"]
                     },
-                    callback: function(r) {
+                    callback: function (r) {
                         if (r.message && r.message.length > 0) {
                             // If the CF Delivery Note exists, route to it and update the cf_delivery_note field
                             frappe.msgprint(__('CF Delivery Note already exists. Redirecting...'));
                             frappe.set_route('Form', 'CF Delivery Note', r.message[0].name);
-        
+
                             // Update the Port Clearance document to set the CF Delivery Note field
                             frappe.call({
                                 method: "frappe.client.set_value",
@@ -44,7 +44,7 @@ frappe.ui.form.on('Port Clearance', {
                                     fieldname: "cf_delivery_note",
                                     value: r.message[0].name
                                 },
-                                callback: function() {
+                                callback: function () {
                                     frm.refresh_field("cf_delivery_note");
                                 }
                             });
@@ -57,15 +57,15 @@ frappe.ui.form.on('Port Clearance', {
                                         doctype: "CF Delivery Note",
                                         clearing_file: frm.doc.clearing_file,
                                         container_deposit_amount: frm.doc.container_deposit_amount,
-                                        posting_date : frappe.datetime.now_date()
+                                        posting_date: frappe.datetime.now_date()
                                     }
                                 },
-                                callback: function(response) {
+                                callback: function (response) {
                                     if (response && response.message) {
                                         frappe.msgprint(__('CF Delivery Note created successfully.'));
                                         // Redirect to the newly created CF Delivery Note
                                         frappe.set_route('Form', 'CF Delivery Note', response.message.name);
-        
+
                                         // Update the Port Clearance document to set the CF Delivery Note field
                                         frappe.call({
                                             method: "frappe.client.set_value",
@@ -75,7 +75,7 @@ frappe.ui.form.on('Port Clearance', {
                                                 fieldname: "cf_delivery_note",
                                                 value: response.message.name
                                             },
-                                            callback: function() {
+                                            callback: function () {
                                                 frm.refresh_field("cf_delivery_note");
                                             }
                                         });
@@ -83,22 +83,22 @@ frappe.ui.form.on('Port Clearance', {
                                         frappe.msgprint(__('There was an issue creating the CF Delivery Note.'));
                                     }
                                 },
-                                error: function(err) {
+                                error: function (err) {
                                     frappe.msgprint(__('Failed to create CF Delivery Note. Please try again.'));
                                 }
                             });
                         }
                     },
-                    error: function(err) {
+                    error: function (err) {
                         frappe.msgprint(__('Failed to check existing CF Delivery Note. Please try again.'));
                     }
                 });
             });
         }
-                
+
     },
 
-    attach_documents: function(frm) {
+    attach_documents: function (frm) {
         // Create the dialog for document attachment
         let d = new frappe.ui.Dialog({
             title: 'Attach Clearing Document',
@@ -108,7 +108,7 @@ frappe.ui.form.on('Port Clearance', {
                     fieldname: 'document_type',
                     fieldtype: 'Link',
                     options: 'Clearing Document Type',
-                    change: function() {
+                    change: function () {
                         let document_type = d.get_value('document_type');
                         if (document_type) {
                             frappe.call({
@@ -117,7 +117,7 @@ frappe.ui.form.on('Port Clearance', {
                                     doctype: 'Clearing Document Type',
                                     name: document_type
                                 },
-                                callback: function(r) {
+                                callback: function (r) {
                                     if (r.message && r.message.clearing_document_attribute) {
                                         let attributes_table = d.get_field('document_attributes').grid;
                                         attributes_table.df.data = []; // Clear existing data
@@ -136,27 +136,16 @@ frappe.ui.form.on('Port Clearance', {
                                         frappe.msgprint(__('No attributes found for the selected document type.'));
                                     }
                                 },
-                                error: function(err) {
-                                    console.error('Error fetching document type attributes:', err);
+                                error: function (err) {
                                     frappe.msgprint(__('Failed to retrieve document attributes. Please try again.'));
                                 }
                             });
                         }
                     }
                 },
-                {
-                    fieldname: "attach_document",
-                    fieldtype: 'Column Break'
-                },
-                {
-                    label: 'Attach Document',
-                    fieldname: "attach_document",
-                    fieldtype: 'Attach'
-                },
-                {
-                    fieldname: "attach_document",
-                    fieldtype: 'Section Break'
-                },
+                { fieldname: "attach_document", fieldtype: 'Column Break' },
+                { label: 'Attach Document', fieldname: "attach_document", fieldtype: 'Attach' },
+                { fieldname: "attach_document", fieldtype: 'Section Break' },
                 {
                     label: 'Document Attributes',
                     fieldname: 'document_attributes',
@@ -173,7 +162,7 @@ frappe.ui.form.on('Port Clearance', {
             primary_action_label: 'Submit',
             primary_action(values) {
                 let attachment_url = document.querySelector('.attached-file-link').getAttribute('href');
-    
+
                 // Validate attributes before submitting
                 let invalid = false;
                 values.document_attributes.forEach(attr => {
@@ -186,9 +175,9 @@ frappe.ui.form.on('Port Clearance', {
                         });
                     }
                 });
-    
+
                 if (invalid) return;  // Stop submission if invalid data
-    
+
                 let clearing_document_attributes = values.document_attributes.map(attr => ({
                     document_attribute: attr.attribute,
                     document_attribute_value: attr.value,
@@ -209,7 +198,7 @@ frappe.ui.form.on('Port Clearance', {
                             clearing_document_attributes: clearing_document_attributes  // Handle child table
                         }
                     },
-                    callback: function(response) {
+                    callback: function (response) {
                         if (response && response.message) {
                             frappe.msgprint(__('Clearing Document created successfully.'));
                             d.hide();
@@ -217,13 +206,22 @@ frappe.ui.form.on('Port Clearance', {
                             frappe.msgprint(__('There was an issue creating the Clearing Document. Please try again.'));
                         }
                     },
-                    error: function(err) {
+                    error: function (err) {
                         frappe.msgprint(__('Failed to create Clearing Document. Please try again.'));
                     }
                 });
             }
         });
-    
+
+        // Set a query to filter "Document Type" where linked_document = "Port Clearance"
+        d.fields_dict.document_type.get_query = function () {
+            return {
+                filters: {
+                    linked_document: "Port Clearance"
+                }
+            };
+        };
+
         d.show();
     }
 });

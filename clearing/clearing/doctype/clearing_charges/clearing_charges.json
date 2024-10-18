@@ -70,8 +70,7 @@
    "in_list_view": 1,
    "label": "Consigee",
    "options": "Customer",
-   "read_only": 1,
-   "unique": 1
+   "read_only": 1
   },
   {
    "fieldname": "charges",
@@ -139,7 +138,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-02 15:03:55.057766",
+ "modified": "2024-10-18 09:52:01.724931",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",

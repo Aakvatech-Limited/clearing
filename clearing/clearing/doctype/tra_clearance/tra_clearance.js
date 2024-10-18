@@ -116,7 +116,7 @@ frappe.ui.form.on("TRA Clearance", {
                             clearing_file: frm.doc.clearing_file,
                             document_attachment: attachment_url,
                             clearing_document_type: values.clearing_document_type,
-                            linked_file: 'Physical Verification',
+                            linked_file: 'TRA Clearance',
                             document_type: values.document_type,
                             clearing_document_attributes: clearing_document_attributes // Handle child table
                         }

@@ -1,23 +1,102 @@
-// Copyright (c) 2024, Nelson Mpanju and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("TRA Clearance", {
     refresh(frm) {
-        // Function to handle the creation or redirection of documents
+        // Fetch the Clearing File document to get its status
+        if (frm.doc.clearing_file) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Clearing File",
+                    name: frm.doc.clearing_file
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        const clearing_file_status = r.message.status;
+
+                        // Add conditional buttons based on the Clearing File status
+                        if (clearing_file_status === 'Pre-Lodged' || clearing_file_status === 'On Process') {
+                            // Port Clearance button
+                            handle_clearance_creation(
+                                'Port Clearance', 'Port Clearance',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'Port Clearance', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Unpaid' },
+                                'Port Clearance created successfully'
+                            );
+
+                            // Physical Verification button
+                            handle_clearance_creation(
+                                'Physical Verification', 'Physical Verification',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'Physical Verification', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Payment Pending' },
+                                'Physical Verification created successfully'
+                            );
+
+                            // Shipment Clearance button
+                            handle_clearance_creation(
+                                'Shipment Clearance', 'Shipment Clearance',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'Shipment Clearance', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Unpaid' },
+                                'Shipment Clearance created successfully'
+                            );
+                        }
+
+                        // Update button types for custom actions
+                        ['Port Clearance', 'Physical Verification', 'Shipment Clearance'].forEach(action => {
+                            frm.change_custom_button_type(action, null, 'primary');
+                        });
+                    }
+                }
+            });
+        }
+
+        // Update the "Attach Documents" button to be primary
         const container = document.querySelector('[data-fieldname="attach_documents"]');
-
         if (container) {
-            // Find the button element within the container
             const button = container.querySelector('button');
-
-            // Override the entire class of the button with the new class
             if (button) {
                 button.className = 'btn btn-xs btn-default bold btn-primary';
             }
         }
 
+        // Helper function to create or redirect to documents
+        function handle_clearance_creation(doctype, label, filters, new_doc_data, success_message) {
+            frm.add_custom_button(__(label), function () {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: doctype,
+                        filters: filters,
+                        limit: 1
+                    },
+                    callback: function (r) {
+                        if (r.message && r.message.length > 0) {
+                            frappe.set_route('Form', doctype, r.message[0].name);
 
+                            if (frm.doc.status === 'Pre-Lodged') {
+                                frm.set_value('status', 'On Process');
+                                frm.save_or_update();
+                            }
+                        } else {
+                            // Create a new document if it doesn't exist
+                            frappe.call({
+                                method: "frappe.client.insert",
+                                args: { doc: new_doc_data },
+                                callback: function (r) {
+                                    if (!r.exc) {
+                                        frappe.msgprint(__(success_message));
+                                        frappe.set_route('Form', doctype, r.message.name);
+
+                                        frm.set_value('status', 'On Process');
+                                        frm.save_or_update();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }, null, 'primary'); // Make the button primary
+        }
     },
+
     attach_documents: function (frm) {
         // Create the dialog for document attachment
         let d = new frappe.ui.Dialog({
@@ -115,7 +194,7 @@ frappe.ui.form.on("TRA Clearance", {
                             doctype: "Clearing Document",
                             clearing_file: frm.doc.clearing_file,
                             document_attachment: attachment_url,
-                            clearing_document_type: values.clearing_document_type,
+                            clearing_document_type: values.document_type,
                             linked_file: 'TRA Clearance',
                             document_type: values.document_type,
                             clearing_document_attributes: clearing_document_attributes // Handle child table
@@ -148,5 +227,5 @@ frappe.ui.form.on("TRA Clearance", {
         };
 
         d.show();
-    },
+    }
 });

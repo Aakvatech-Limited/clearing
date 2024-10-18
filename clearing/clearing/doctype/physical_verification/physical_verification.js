@@ -3,8 +3,94 @@
 
 frappe.ui.form.on("Physical Verification", {
     refresh(frm) {
+        // Fetch the Clearing File document to get its status
+        if (frm.doc.clearing_file) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Clearing File",
+                    name: frm.doc.clearing_file
+                },
+                callback: function (r) {
+                    if (r.message) {
+                        const clearing_file_status = r.message.status;
 
+                        // Add conditional buttons based on the Clearing File status
+                        if (clearing_file_status === 'Pre-Lodged' || clearing_file_status === 'On Process') {
+                            // Port Clearance button
+                            handle_clearance_creation(
+                                'Port Clearance', 'Port Clearance',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'Port Clearance', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Unpaid' },
+                                'Port Clearance created successfully'
+                            );
+
+                            // TRA Clearance button
+                            handle_clearance_creation(
+                                'TRA Clearance', 'TRA Clearance',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'TRA Clearance', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Payment Pending' },
+                                'TRA Clearance created successfully'
+                            );
+
+                            // Shipment Clearance button
+                            handle_clearance_creation(
+                                'Shipment Clearance', 'Shipment Clearance',
+                                { clearing_file: frm.doc.clearing_file },
+                                { doctype: 'Shipment Clearance', clearing_file: frm.doc.clearing_file, customer: frm.doc.customer, status: 'Unpaid' },
+                                'Shipment Clearance created successfully'
+                            );
+                        }
+
+                        // Update button types for custom actions
+                        ['Port Clearance', 'TRA Clearance', 'Shipment Clearance'].forEach(action => {
+                            frm.change_custom_button_type(action, null, 'primary');
+                        });
+                    }
+                }
+            });
+        }
+
+        // Helper function to create or redirect to documents
+        function handle_clearance_creation(doctype, label, filters, new_doc_data, success_message) {
+            frm.add_custom_button(__(label), function () {
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: doctype,
+                        filters: filters,
+                        limit: 1
+                    },
+                    callback: function (r) {
+                        if (r.message && r.message.length > 0) {
+                            frappe.set_route('Form', doctype, r.message[0].name);
+
+                            if (frm.doc.status === 'Pre-Lodged') {
+                                frm.set_value('status', 'On Process');
+                                frm.save_or_update();
+                            }
+                        } else {
+                            // Create a new document if it doesn't exist
+                            frappe.call({
+                                method: "frappe.client.insert",
+                                args: { doc: new_doc_data },
+                                callback: function (r) {
+                                    if (!r.exc) {
+                                        frappe.msgprint(__(success_message));
+                                        frappe.set_route('Form', doctype, r.message.name);
+
+                                        frm.set_value('status', 'On Process');
+                                        frm.save_or_update();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }, null, 'primary'); // Make the button primary
+        }
     },
+
     attach_documents: function (frm) {
         // Create the dialog for document attachment
         let d = new frappe.ui.Dialog({
@@ -142,6 +228,5 @@ frappe.ui.form.on("Physical Verification", {
         };
 
         d.show();
-    },
-
+    }
 });

@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
 
-class ShipmentClearance(Document):
+class ShippingLineClearance(Document):
 
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""

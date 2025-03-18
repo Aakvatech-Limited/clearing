@@ -120,7 +120,7 @@ doc_events = {
     "TRA Clearance": {
         "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
     },
-    "Shipment Clearance": {
+    "Shipping Line Clearance": {
         "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
     },
     "Physical Verification": {
@@ -255,7 +255,7 @@ fixtures = [
             [
                 "name", "in", [
                     "Port Clearance",
-                    "Shipment Clearance",
+                    "Shipping Line Clearance",
                     "TRA Clearance",
                     "Physical Verification"
                 ]

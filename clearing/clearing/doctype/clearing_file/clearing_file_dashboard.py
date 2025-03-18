@@ -7,7 +7,7 @@ def get_data():
         "non_standard_fieldnames": {
             "TRA Clearance": "clearing_file",
             "Physical Verification": "clearing_file",
-            "Shipment Clearance": "clearing_file",
+            "Shipping Line Clearance": "clearing_file",
             "Port Clearance": "clearing_file",
             "Clearing Document": "clearing_file"
         },
@@ -15,7 +15,7 @@ def get_data():
         "transactions": [
             {
                 "label": _("Clearance Processes"),
-                "items": ["TRA Clearance", "Physical Verification", "Shipment Clearance", "Port Clearance"]
+                "items": ["TRA Clearance", "Physical Verification", "Shipping Line Clearance", "Port Clearance"]
             },
             {
                 "label": _("Attached Documents"),

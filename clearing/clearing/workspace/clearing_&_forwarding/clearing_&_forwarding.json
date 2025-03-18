@@ -199,9 +199,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Shipment Clearance",
+   "label": "Shipping Line Clearance",
    "link_count": 0,
-   "link_to": "Shipment Clearance",
+   "link_to": "Shipping Line Clearance",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -237,7 +237,7 @@
    "type": "Link"
   }
  ],
- "modified": "2024-09-19 15:59:46.158493",
+ "modified": "2025-03-17 21:00:11.095043",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing & Forwarding",

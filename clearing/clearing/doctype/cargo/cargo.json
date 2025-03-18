@@ -16,7 +16,6 @@
   "column_break_2",
   "weight",
   "volume",
-  "country_of_origin",
   "column_break_3",
   "value",
   "currency",
@@ -54,13 +53,6 @@
    "fieldname": "volume",
    "fieldtype": "Float",
    "label": "Volume (CBM)"
-  },
-  {
-   "fieldname": "country_of_origin",
-   "fieldtype": "Link",
-   "label": "Cargo's country of Origin",
-   "options": "Country",
-   "reqd": 1
   },
   {
    "fieldname": "column_break_3",
@@ -118,7 +110,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-02 10:32:03.091905",
+ "modified": "2025-03-17 18:09:12.138233",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Cargo",

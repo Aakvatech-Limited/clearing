@@ -47,7 +47,6 @@
   "special_instructions",
   "amended_from",
   "dashboard_tab",
-  "stats",
   "connections_tab",
   "tancis_lodging_date",
   "reference_no",
@@ -268,7 +267,7 @@
    "fieldname": "bl_type",
    "fieldtype": "Select",
    "label": "B/L Status",
-   "options": "\nOriginal B/L\nSeaway Bill\nTelex B/L",
+   "options": "\nOriginal B/L\nSeaway Bill\nTelex B/L\nDraft B/L",
    "reqd": 1
   },
   {
@@ -277,11 +276,6 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
-  },
-  {
-   "fieldname": "stats",
-   "fieldtype": "Section Break",
-   "label": "Stats"
   },
   {
    "fieldname": "attach_documents",
@@ -350,7 +344,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-25 18:56:04.504988",
+ "modified": "2025-03-17 18:08:13.735085",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

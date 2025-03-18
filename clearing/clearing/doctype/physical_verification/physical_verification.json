@@ -125,6 +125,7 @@
    "read_only": 1
   },
   {
+   "fetch_from": "clearing_file.cargo_location",
    "fieldname": "verification_location",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -174,13 +175,11 @@
    "label": "Paid By Clearing Agent"
   },
   {
-   "default": "Today",
    "fieldname": "release_order_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Release Order Date",
-   "reqd": 1
+   "label": "Release Order Date"
   },
   {
    "fieldname": "column_break_ktifs",
@@ -227,7 +226,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-18 11:52:26.998859",
+ "modified": "2025-03-14 14:54:41.971178",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

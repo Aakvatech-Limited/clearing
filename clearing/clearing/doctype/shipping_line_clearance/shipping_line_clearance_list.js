@@ -1,4 +1,4 @@
-// frappe.listview_settings['Shipment Clearance'] = {
+// frappe.listview_settings['Shipping Line Clearance'] = {
 //     refresh(listview) {
 //         // Hook onto the alert container and log its content
 //         const alertContainer = document.getElementById('alert-container');
@@ -29,7 +29,7 @@
 //                         frappe.call({
 //                             method: "frappe.client.get",
 //                             args: {
-//                                 doctype: "Shipment Clearance",
+//                                 doctype: "Shipping Line Clearance",
 //                                 name: docname
 //                             },
 //                             callback: function(r) {

@@ -1,5 +1,6 @@
 import frappe
 from frappe.model.document import Document
+from frappe.contacts.doctype.address.address import get_address_display
 from frappe import _
 
 
@@ -51,8 +52,8 @@ class ClearingFile(Document):
                 "field": "total_charges",
             },
             {
-                "doctype": "Shipment Clearance",
-                "charge_type": "Shipment Clearance",
+                "doctype": "Shipping Line Clearance",
+                "charge_type": "Shipping Line Clearance",
                 "field": "total_charges",
             },
             {
@@ -191,7 +192,7 @@ def update_status_to_cleared(doc, method):
     # List of related doctypes to check submission status
     related_doctypes = [
         {"doctype": "TRA Clearance", "link_field": "clearing_file"},
-        {"doctype": "Shipment Clearance", "link_field": "clearing_file"},
+        {"doctype": "Shipping Line Clearance", "link_field": "clearing_file"},
         {"doctype": "Physical Verification", "link_field": "clearing_file"},
         {"doctype": "Port Clearance", "link_field": "clearing_file"},
     ]

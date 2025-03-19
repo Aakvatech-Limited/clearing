@@ -31,8 +31,8 @@ def populate_document_in_parent(self):
             "child_table": "document",  
             "link_field": "clearing_file"  
         },
-        "Shipment Clearance": {
-            "doctype": "Shipment Clearance",
+        "Shipping Line Clearance": {
+            "doctype": "Shipping Line Clearance",
             "child_table": "document", 
             "link_field": "clearing_file"  
         }

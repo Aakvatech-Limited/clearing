@@ -1,7 +1,7 @@
 // Copyright (c) 2024, Nelson Mpanju and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Shipment Clearance', {
+frappe.ui.form.on('Shipping Line Clearance', {
     refresh: function (frm) {
         // Display alert based on the document's expiration status
         handleDocumentExpiry(frm);
@@ -292,7 +292,7 @@ function submitDocumentAttachment(frm, values, d) {
                 doctype: "Clearing Document",
                 clearing_file: frm.doc.clearing_file,
                 document_attachment: attachment_url,
-                linked_file: 'Shipment Clearance',
+                linked_file: 'Shipping Line Clearance',
                 clearing_document_type: values.clearing_document_type,
                 document_type: values.document_type,
                 clearing_document_attributes: clearing_document_attributes

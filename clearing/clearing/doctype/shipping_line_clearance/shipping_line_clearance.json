@@ -11,6 +11,8 @@
   "clearing_file",
   "consignee",
   "delivery_order_expire_date",
+  "drop_off_date",
+  "container_deposit_amount",
   "column_break_a2owv",
   "posting_date",
   "status",
@@ -21,6 +23,7 @@
   "column_break_r0s5o",
   "paid_by_clearing_agent",
   "invoice_paid",
+  "invoice_received",
   "section_break_keyml",
   "attach_documents",
   "section_break_uevyo",
@@ -42,7 +45,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Shipment Clearance",
+   "options": "Shipping Line Clearance",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -142,15 +145,31 @@
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
    "label": "Charges Paid"
+  },
+  {
+   "fieldname": "drop_off_date",
+   "fieldtype": "Date",
+   "label": "Drop Off Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice_received",
+   "fieldtype": "Check",
+   "label": "Invoice Received"
+  },
+  {
+   "fieldname": "container_deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Container Deposit Amount"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-27 10:22:44.091854",
+ "modified": "2025-03-17 17:36:09.547956",
  "modified_by": "Administrator",
  "module": "Clearing",
- "name": "Shipment Clearance",
+ "name": "Shipping Line Clearance",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

@@ -21,7 +21,7 @@ class ClearingCharges(Document):
                 tra_total += float(charge.amount)
             elif charge.charge_type == "Port Clearance":
                 port_total += float(charge.amount)
-            elif charge.charge_type == "Shipment Clearance":
+            elif charge.charge_type == "Shipping Line Clearance":
                 shipment_total += float(charge.amount)
             elif charge.charge_type == "Physical Verification":
                 physical_total += float(charge.amount)

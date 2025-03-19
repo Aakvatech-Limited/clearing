@@ -20,7 +20,6 @@
   "staff_name",
   "total_charges_section",
   "total_charges",
-  "container_deposit_amount",
   "column_break_ayxk7",
   "paid_by_clearing_agent",
   "invoice_paid",
@@ -143,12 +142,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "container_deposit_amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Container Deposit Amount"
-  },
-  {
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
@@ -166,7 +159,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-24 15:49:42.908779",
+ "modified": "2025-03-14 16:07:23.997337",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

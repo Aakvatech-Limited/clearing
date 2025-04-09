@@ -3,7 +3,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.model.document import Document
+from frappe.model.document import Document, _
 
 class ClearingDocument(Document):
     def after_insert(self):
@@ -93,3 +93,21 @@ def populate_document_in_parent(self):
 
     # Save the parent document after the updates
     parent_doc.save()
+
+def validate(self):
+    self.validate_unique_document_type()
+
+def validate_unique_document_type(self):
+    if self.document_type and self.clearing_file:
+        existing = frappe.db.exists("Clearing Document", {
+            "document_type": self.document_type,
+            "clearing_file": self.clearing_file,
+            "name": ("!=", self.name)
+        })
+        if existing:
+            frappe.throw(
+                _("A document of type {0} already exists for this Clearing File").format(
+                    frappe.bold(self.document_type)
+                ),
+                title=_("Duplicate Document")
+            )

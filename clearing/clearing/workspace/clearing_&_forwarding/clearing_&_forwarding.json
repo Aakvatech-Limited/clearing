@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"qjkf8U9csa\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Clearing &amp; Forwarding</span>\",\"col\":12}},{\"id\":\"ZIJAIUkM_7\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration Documents\",\"col\":4}},{\"id\":\"WSCYUVEegx\",\"type\":\"card\",\"data\":{\"card_name\":\"Main Documents\",\"col\":4}},{\"id\":\"y4vEvvBHtQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Clearance Documents\",\"col\":4}},{\"id\":\"k_XCQEVnSd\",\"type\":\"card\",\"data\":{\"card_name\":\"Finance\",\"col\":4}},{\"id\":\"WA_L7zE3tD\",\"type\":\"card\",\"data\":{\"card_name\":\"Addresses & Contacts\",\"col\":4}},{\"id\":\"f12P4ALb2E\",\"type\":\"card\",\"data\":{\"card_name\":\"Documents Storage\",\"col\":4}}]",
+ "content": "[{\"id\":\"qjkf8U9csa\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Clearing &amp; Forwarding</span>\",\"col\":12}},{\"id\":\"ZIJAIUkM_7\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuration Documents\",\"col\":4}},{\"id\":\"WSCYUVEegx\",\"type\":\"card\",\"data\":{\"card_name\":\"Main Documents\",\"col\":4}},{\"id\":\"y4vEvvBHtQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Clearance Documents\",\"col\":4}},{\"id\":\"k_XCQEVnSd\",\"type\":\"card\",\"data\":{\"card_name\":\"Finance\",\"col\":4}},{\"id\":\"8FdVImHb7B\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Undelivered Files\",\"col\":3}},{\"id\":\"WA_L7zE3tD\",\"type\":\"card\",\"data\":{\"card_name\":\"Addresses & Contacts\",\"col\":4}},{\"id\":\"f12P4ALb2E\",\"type\":\"card\",\"data\":{\"card_name\":\"Documents Storage\",\"col\":4}}]",
  "creation": "2024-07-16 16:13:53.401495",
  "custom_blocks": [],
  "docstatus": 0,
@@ -237,7 +237,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-03-17 21:00:11.095043",
+ "modified": "2025-04-09 17:51:16.061608",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing & Forwarding",
@@ -248,6 +248,15 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 1.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Undelivered Files",
+   "link_to": "Clearing File",
+   "stats_filter": "[[\"Clearing File\",\"status\",\"!=\",\"Delivered\",false]]",
+   "type": "DocType"
+  }
+ ],
  "title": "Clearing & Forwarding"
 }

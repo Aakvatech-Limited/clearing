@@ -11,41 +11,42 @@ frappe.ui.form.on("TRA Clearance", {
         callback: function (r) {
           if (r.message) {
             const clearing_file_status = r.message.status;
+            const mode_of_transport = clearing_file.mode_of_transport;
+
+            // Port Clearance button
+            handle_clearance_creation(
+              "Port Clearance",
+              "Port Clearance",
+              { clearing_file: frm.doc.clearing_file },
+              {
+                doctype: "Port Clearance",
+                clearing_file: frm.doc.clearing_file,
+                customer: frm.doc.customer,
+                status: "Unpaid",
+              },
+              "Port Clearance created successfully"
+            );
+
+            // Physical Verification button
+            handle_clearance_creation(
+              "Physical Verification",
+              "Physical Verification",
+              { clearing_file: frm.doc.clearing_file },
+              {
+                doctype: "Physical Verification",
+                clearing_file: frm.doc.clearing_file,
+                customer: frm.doc.customer,
+                status: "Payment Pending",
+              },
+              "Physical Verification created successfully"
+            );
 
             // Add conditional buttons based on the Clearing File status
             if (
-              clearing_file_status === "Pre-Lodged" ||
-              clearing_file_status === "On Process"
+              mode_of_transport !== "Air" &&
+              (clearing_file_status === "Pre-Lodged" ||
+                clearing_file_status === "On Process")
             ) {
-              // Port Clearance button
-              handle_clearance_creation(
-                "Port Clearance",
-                "Port Clearance",
-                { clearing_file: frm.doc.clearing_file },
-                {
-                  doctype: "Port Clearance",
-                  clearing_file: frm.doc.clearing_file,
-                  customer: frm.doc.customer,
-                  status: "Unpaid",
-                },
-                "Port Clearance created successfully"
-              );
-
-              // Physical Verification button
-              handle_clearance_creation(
-                "Physical Verification",
-                "Physical Verification",
-                { clearing_file: frm.doc.clearing_file },
-                {
-                  doctype: "Physical Verification",
-                  clearing_file: frm.doc.clearing_file,
-                  customer: frm.doc.customer,
-                  status: "Payment Pending",
-                },
-                "Physical Verification created successfully"
-              );
-
-              // Shipment Clearance button
               handle_clearance_creation(
                 "Shipping Line Clearance",
                 "Shipping Line Clearance",
@@ -60,14 +61,8 @@ frappe.ui.form.on("TRA Clearance", {
               );
             }
 
-            // Update button types for custom actions
-            [
-              "Port Clearance",
-              "Physical Verification",
-              "Shipping Line Clearance",
-            ].forEach((action) => {
-              frm.change_custom_button_type(action, null, "primary");
-            });
+            // Refresh buttons display
+            frm.refresh_fields();
           }
         },
       });
@@ -221,7 +216,7 @@ frappe.ui.form.on("TRA Clearance", {
             },
             {
               fieldname: "mandatory",
-              label: "mandatory",
+              label: "Mandatory",
               fieldtype: "Check",
               in_list_view: 1,
               read_only: 1,
@@ -232,67 +227,94 @@ frappe.ui.form.on("TRA Clearance", {
       size: "large",
       primary_action_label: "Submit",
       primary_action(values) {
-        let attachment_url = document
-          .querySelector(".attached-file-link")
-          .getAttribute("href");
-
-        // Validate mandatory fields
-        let invalid = false;
-        values.document_attributes.forEach((attr) => {
-          if (attr.mandatory && !attr.value) {
-            invalid = true;
-            frappe.msgprint({
-              title: __("Missing Value"),
-              message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
-              indicator: "red",
-            });
-          }
-        });
-
-        // If validation fails, stop submission
-        if (invalid) return;
-
-        // Prepare the child table data
-        let clearing_document_attributes = values.document_attributes.map(
-          (attr) => ({
-            document_attribute: attr.attribute,
-            document_attribute_value: attr.value,
-            mandatory: attr.mandatory,
-          })
-        );
-
-        // Use Frappe API to create the document
+        // First check for duplicates
         frappe.call({
-          method: "frappe.client.insert",
+          method: "frappe.client.get_list",
           args: {
-            doc: {
-              doctype: "Clearing Document",
+            doctype: "Clearing Document",
+            filters: {
               clearing_file: frm.doc.clearing_file,
-              document_attachment: attachment_url,
-              clearing_document_type: values.document_type,
-              linked_file: "TRA Clearance",
               document_type: values.document_type,
-              clearing_document_attributes: clearing_document_attributes, // Handle child table
+              linked_file: "TRA Clearance", // Change this for each doctype
             },
+            fields: ["name"],
           },
-          callback: function (response) {
-            if (response && response.message) {
-              frappe.msgprint(__("Clearing Document created successfully."));
-              d.hide();
-            } else {
-              console.error("Failed to create Clearing Document.");
-              frappe.msgprint(
+          callback: function (r) {
+            if (r.message && r.message.length > 0) {
+              frappe.throw(
                 __(
-                  "There was an issue creating the Clearing Document. Please try again."
+                  "This document type has already been attached to this TRA Clearance."
                 )
               );
+              return;
             }
-          },
-          error: function (err) {
-            console.error("Error during document creation:", err);
-            frappe.msgprint(
-              __("Failed to create Clearing Document. Please try again.")
+
+            let attachment_url = document
+              .querySelector(".attached-file-link")
+              .getAttribute("href");
+
+            // Validate mandatory fields
+            let invalid = false;
+            values.document_attributes.forEach((attr) => {
+              if (attr.mandatory && !attr.value) {
+                invalid = true;
+                frappe.msgprint({
+                  title: __("Missing Value"),
+                  message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
+                  indicator: "red",
+                });
+              }
+            });
+
+            // If validation fails, stop submission
+            if (invalid) return;
+
+            // Prepare the child table data
+            let clearing_document_attributes = values.document_attributes.map(
+              (attr) => ({
+                document_attribute: attr.attribute,
+                document_attribute_value: attr.value,
+                mandatory: attr.mandatory,
+              })
             );
+
+            // Use Frappe API to create the document
+            frappe.call({
+              method: "frappe.client.insert",
+              args: {
+                doc: {
+                  doctype: "Clearing Document",
+                  clearing_file: frm.doc.clearing_file,
+                  document_attachment: attachment_url,
+                  clearing_document_type: values.document_type,
+                  linked_file: "TRA Clearance",
+                  document_type: values.document_type,
+                  clearing_document_attributes: clearing_document_attributes, // Handle child table
+                },
+              },
+              callback: function (response) {
+                if (response && response.message) {
+                  frappe.msgprint(
+                    __("Clearing Document created successfully.")
+                  );
+                  d.hide();
+                  frm.refresh();
+                } else {
+                  console.error("Failed to create Clearing Document.");
+                  frappe.msgprint(
+                    __(
+                      "There was an issue creating the Clearing Document. Please try again."
+                    )
+                  );
+                }
+              },
+              error: function (err) {
+                console.error("Error during document creation:", err);
+                frappe.msgprint(
+                  __("Failed to create Clearing Document. Please try again.")
+                );
+              },
+            });
           },
         });
       },

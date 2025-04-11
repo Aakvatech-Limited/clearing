@@ -11,7 +11,7 @@ frappe.ui.form.on("Port Clearance", {
         callback: function (r) {
           if (r.message) {
             const clearing_file_status = r.message.status;
-            const mode_of_transport = clearing_file.mode_of_transport;
+            const mode_of_transport = clearing_file_status.mode_of_transport;
 
             // Always show these buttons
             handle_clearance_creation(

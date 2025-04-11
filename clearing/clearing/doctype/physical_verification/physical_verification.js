@@ -14,7 +14,7 @@ frappe.ui.form.on("Physical Verification", {
         callback: function (r) {
           if (r.message) {
             const clearing_file_status = r.message.status;
-            const mode_of_transport = clearing_file.mode_of_transport;
+            const mode_of_transport = clearing_file_status.mode_of_transport;
 
             // Port Clearance button
             handle_clearance_creation(

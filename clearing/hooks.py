@@ -64,6 +64,13 @@ app_license = "MIT"
 # before_install = "clearing.install.before_install"
 # after_install = "clearing.install.after_install"
 
+before_delete = [
+    "clearing.clearing.utils.allow_deletion_with_confirmation"
+]
+
+validate = [
+    "clearing.clearing.utils.validate_unique_document"
+]
 # Uninstallation
 # ------------
 

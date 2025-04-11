@@ -10,8 +10,14 @@ class ClearingFile(Document):
         self.check_and_update_status()
 
     def before_submit(self):
+        if self.status != "Delivered":
+            frappe.throw(
+                _("Cannot submit Clearing File unless status is 'Delivered'."),
+                title=_("Invalid Status"),
+            )
         # On submit, enforce that all required documents are attached
         ensure_all_documents_attached(self, "clearing_file_document")
+        self.check_and_validate_clearing_charges()
 
         # Check if clearing charges exist and validate the amounts only if relevant doctypes have total charges
         self.check_and_validate_clearing_charges()
@@ -39,29 +45,36 @@ class ClearingFile(Document):
             pass
 
     def check_and_validate_clearing_charges(self):
+        mode_of_transport = self.mode_of_transport
         # Fetch the total charges from each related doctype
         related_doctypes = [
             {
                 "doctype": "TRA Clearance",
                 "charge_type": "TRA Clearance",
                 "field": "total_charges",
+                "paid_by_agent_field": "paid_by_clearing_agent",
             },
             {
                 "doctype": "Port Clearance",
                 "charge_type": "Port Clearance",
                 "field": "total_charges",
-            },
-            {
-                "doctype": "Shipping Line Clearance",
-                "charge_type": "Shipping Line Clearance",
-                "field": "total_charges",
+                "paid_by_agent_field": "paid_by_clearing_agent",
             },
             {
                 "doctype": "Physical Verification",
                 "charge_type": "Physical Verification",
                 "field": "total_charges",
+                "paid_by_agent_field": "paid_by_clearing_agent",
             },
         ]
+
+        if mode_of_transport != "Air":
+            related_doctypes.append({
+                "doctype": "Shipping Line Clearance",
+                "charge_type": "Shipping Line Clearance",
+                "field": "total_charges",
+                "paid_by_agent_field": "paid_by_clearing_agent",
+            })
 
         charges_needed = False
 
@@ -69,12 +82,15 @@ class ClearingFile(Document):
         for doc_info in related_doctypes:
             related_docs = frappe.get_all(
                 doc_info["doctype"],
-                filters={"clearing_file": self.name},
+                filters={
+                    "clearing_file": self.name,
+                    doc_info["paid_by_agent_field"]: 1,
+                },
                 fields=[doc_info["field"]],
             )
 
             if related_docs:
-                total_charges = related_docs[0][doc_info["field"]]
+                total_charges = related_docs[0].get(doc_info["field"], 0)
 
                 # If there are total charges, we need to validate clearing charges
                 if total_charges > 0:
@@ -189,13 +205,23 @@ def get_address_display_from_link(doctype, name):
 def update_status_to_cleared(doc, method):
     clearing_file_name = doc.clearing_file
 
+    # Fetch the Clearing File's mode_of_transport
+    mode_of_transport = frappe.db.get_value(
+        "Clearing File", clearing_file_name, "mode_of_transport"
+    )
+
     # List of related doctypes to check submission status
     related_doctypes = [
         {"doctype": "TRA Clearance", "link_field": "clearing_file"},
-        {"doctype": "Shipping Line Clearance", "link_field": "clearing_file"},
         {"doctype": "Physical Verification", "link_field": "clearing_file"},
         {"doctype": "Port Clearance", "link_field": "clearing_file"},
     ]
+
+    # Include Shipping Line Clearance only if mode is NOT Air
+    if mode_of_transport != "Air":
+        related_doctypes.append(
+            {"doctype": "Shipping Line Clearance", "link_field": "clearing_file"}
+        )
 
     for doc_type in related_doctypes:
         linked_docs = frappe.get_all(

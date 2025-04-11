@@ -3,6 +3,14 @@
 
 frappe.ui.form.on("Clearing File", {
   refresh: function (frm) {
+    // Force refresh of submit button
+    if (frm.doc.status === "Delivered") {
+      frm.page
+        .set_primary_action(__("Submit"), function () {
+          frm.save("Submit");
+        })
+        .show();
+    }
     // Update the "Attach Documents" button to be primary
     const container = document.querySelector(
       '[data-fieldname="attach_documents"]'
@@ -84,18 +92,20 @@ frappe.ui.form.on("Clearing File", {
       );
 
       // Shipment Clearance
-      handle_clearance_creation(
-        "Shipping Line Clearance",
-        "Shipping Line Clearance",
-        { clearing_file: frm.doc.name },
-        {
-          doctype: "Shipping Line Clearance",
-          clearing_file: frm.doc.name,
-          customer: frm.doc.customer,
-          status: "Unpaid",
-        },
-        "Shipping Line Clearance created successfully"
-      );
+      if (frm.doc.mode_of_transport !== "Air") {
+        handle_clearance_creation(
+          "Shipping Line Clearance",
+          "Shipping Line Clearance",
+          { clearing_file: frm.doc.name },
+          {
+            doctype: "Shipping Line Clearance",
+            clearing_file: frm.doc.name,
+            customer: frm.doc.customer,
+            status: "Unpaid",
+          },
+          "Shipping Line Clearance created successfully"
+        );
+      }
 
       // Physical Verification
       handle_clearance_creation(
@@ -125,6 +135,10 @@ frappe.ui.form.on("Clearing File", {
         "Port Clearance created successfully"
       );
     }
+
+    frm.fields_dict.mode_of_transport.df.onchange = () => {
+      frm.refresh();
+    };
 
     // Update button types for custom actions
     [
@@ -315,7 +329,7 @@ function proceedWithAttachmentDialog(frm) {
           },
           {
             fieldname: "mandatory",
-            label: "mandatory",
+            label: "Mandatory",
             fieldtype: "Check",
             in_list_view: 1,
             read_only: 1,
@@ -325,68 +339,91 @@ function proceedWithAttachmentDialog(frm) {
     ],
     size: "large",
     primary_action_label: "Submit",
-    primary_action(values) {
-      // Validation: Check if mandatory fields have values
-      let invalid = false;
-      values.document_attributes.forEach((attr) => {
-        if (attr.mandatory && !attr.value) {
-          invalid = true;
-          frappe.msgprint({
-            title: __("Missing Value"),
-            message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
-            indicator: "red",
-          });
-        }
-      });
-
-      // If validation fails, stop submission
-      if (invalid) return;
-
-      // Prepare the child table data
-      let clearing_document_attributes = values.document_attributes.map(
-        (attr) => ({
-          document_attribute: attr.attribute,
-          document_attribute_value: attr.value,
-          mandatory: attr.mandatory,
-        })
-      );
-
-      // Get the attachment URL
-      let attachment_url = document
-        .querySelector(".attached-file-link")
-        .getAttribute("href");
-
-      // Use Frappe API to create the document
+    primary_action: function (values) {
+      // First check for duplicate documents
       frappe.call({
-        method: "frappe.client.insert",
+        method: "frappe.client.get_list",
         args: {
-          doc: {
-            doctype: "Clearing Document",
+          doctype: "Clearing Document",
+          filters: {
             clearing_file: frm.doc.name,
-            document_attachment: attachment_url, // Attach document here
-            clearing_document_type: values.document_type,
             document_type: values.document_type,
-            clearing_document_attributes: clearing_document_attributes, // Handle child table
           },
+          fields: ["name"],
         },
-        callback: function (response) {
-          if (response && response.message) {
-            frappe.msgprint(__("Clearing Document created successfully."));
-            d.hide();
-          } else {
-            console.error("Failed to create Clearing Document.");
-            frappe.msgprint(
+        callback: function (r) {
+          if (r.message && r.message.length > 0) {
+            frappe.throw(
               __(
-                "There was an issue creating the Clearing Document. Please try again."
+                "This document type has already been attached. " +
+                  "Please choose a different document type."
               )
             );
+            return;
           }
-        },
-        error: function (err) {
-          console.error("Error during document creation:", err);
-          frappe.msgprint(
-            __("Failed to create Clearing Document. Please try again.")
+          // Validation: Check if mandatory fields have values
+          let invalid = false;
+          values.document_attributes.forEach((attr) => {
+            if (attr.mandatory && !attr.value) {
+              invalid = true;
+              frappe.msgprint({
+                title: __("Missing Value"),
+                message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
+                indicator: "red",
+              });
+            }
+          });
+
+          // If validation fails, stop submission
+          if (invalid) return;
+
+          // Prepare the child table data
+          let clearing_document_attributes = values.document_attributes.map(
+            (attr) => ({
+              document_attribute: attr.attribute,
+              document_attribute_value: attr.value,
+              mandatory: attr.mandatory,
+            })
           );
+
+          // Get the attachment URL
+          let attachment_url = document
+            .querySelector(".attached-file-link")
+            .getAttribute("href");
+
+          // Use Frappe API to create the document
+          frappe.call({
+            method: "frappe.client.insert",
+            args: {
+              doc: {
+                doctype: "Clearing Document",
+                clearing_file: frm.doc.name,
+                document_attachment: attachment_url, // Attach document here
+                clearing_document_type: values.document_type,
+                document_type: values.document_type,
+                clearing_document_attributes: clearing_document_attributes, // Handle child table
+              },
+            },
+            callback: function (response) {
+              if (response && response.message) {
+                frappe.msgprint(__("Clearing Document created successfully."));
+                d.hide();
+              } else {
+                console.error("Failed to create Clearing Document.");
+                frappe.msgprint(
+                  __(
+                    "There was an issue creating the Clearing Document. Please try again."
+                  )
+                );
+              }
+            },
+            error: function (err) {
+              console.error("Error during document creation:", err);
+              frappe.msgprint(
+                __("Failed to create Clearing Document. Please try again.")
+              );
+            },
+          });
         },
       });
     },

@@ -9,6 +9,8 @@
   "package_type",
   "hs_code",
   "container_number",
+  "quantity_of_hs_code",
+  "quantity_of_container",
   "column_break_1",
   "cargo_description",
   "number_of_packages",
@@ -20,7 +22,8 @@
   "value",
   "currency",
   "trading_country",
-  "country_last_consignment"
+  "country_last_consignment",
+  "country_of_destination"
  ],
  "fields": [
   {
@@ -105,17 +108,33 @@
    "fieldtype": "Link",
    "label": "Country Last Consignment",
    "options": "Country"
+  },
+  {
+   "fieldname": "quantity_of_container",
+   "fieldtype": "Int",
+   "label": "Quantity of Container"
+  },
+  {
+   "fieldname": "country_of_destination",
+   "fieldtype": "Data",
+   "label": "Country of Destination"
+  },
+  {
+   "fieldname": "quantity_of_hs_code",
+   "fieldtype": "Int",
+   "label": "Quantity of HS Code"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-17 18:09:12.138233",
+ "modified": "2025-04-09 16:14:35.402894",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Cargo",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

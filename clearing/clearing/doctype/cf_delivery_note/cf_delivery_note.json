@@ -13,8 +13,11 @@
   "column_break_hrtyp",
   "posting_date",
   "delivery_date",
+  "loading_date",
   "address",
   "delivery_location",
+  "staff_id",
+  "staff_name",
   "truck_announcement_section",
   "exporter_type",
   "column_break_hkier",
@@ -128,12 +131,31 @@
    "fieldtype": "Date",
    "label": "Return Date ",
    "mandatory_depends_on": "eval:doc.has_container_interchange == 1"
+  },
+  {
+   "fieldname": "staff_id",
+   "fieldtype": "Link",
+   "label": "Staff Id",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "staff_id.employee_name",
+   "fieldname": "staff_name",
+   "fieldtype": "Data",
+   "label": "Staff Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "loading_date",
+   "fieldtype": "Date",
+   "label": "Loading Date"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-14 14:50:28.349004",
+ "modified": "2025-04-03 18:02:49.066827",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "CF Delivery Note",
@@ -153,6 +175,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

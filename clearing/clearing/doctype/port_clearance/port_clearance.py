@@ -4,8 +4,16 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from clearing.clearing.utils import validate_unique_document
 
 class PortClearance(Document):
+    def validate(self):
+        if not self.get("documents"):
+            self.set("documents", [])
+            
+        # For documents attached via child table
+        for doc in self.get("documents"):
+            validate_unique_document(doc)
 
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""

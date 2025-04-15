@@ -301,38 +301,33 @@
   {
    "fieldname": "tancis_lodging_date",
    "fieldtype": "Date",
-   "label": "TANCIS Lodging Date",
-   "reqd": 1
+   "label": "TANCIS Lodging Date"
   },
   {
    "fieldname": "reference_no",
    "fieldtype": "Data",
    "in_filter": 1,
    "in_standard_filter": 1,
-   "label": "Reference No",
-   "reqd": 1
+   "label": "Reference No"
   },
   {
    "fieldname": "tansad_no",
    "fieldtype": "Data",
    "in_filter": 1,
    "in_standard_filter": 1,
-   "label": "TANSAD No",
-   "reqd": 1
+   "label": "TANSAD No"
   },
   {
    "fieldname": "declaration_type",
    "fieldtype": "Select",
    "label": "Declaration Type",
-   "options": "\nEX1 EXPORTATION\nEX2 TEMPORARY EXPORT\nEX3 RE-EXPORT\nIM4 ENTRY FOR HOME USE\nIM5 TEMPORARY IMPORTATION\nIM6 RE-IMPORTATION\nIM7 ENTRY FOR WAREHOUSING\nIM8 TRANSIT AND TRANSHIPMENT\nIM9 OTHER IMPORT PROCEDURES",
-   "reqd": 1
+   "options": "\nEX1 EXPORTATION\nEX2 TEMPORARY EXPORT\nEX3 RE-EXPORT\nIM4 ENTRY FOR HOME USE\nIM5 TEMPORARY IMPORTATION\nIM6 RE-IMPORTATION\nIM7 ENTRY FOR WAREHOUSING\nIM8 TRANSIT AND TRANSHIPMENT\nIM9 OTHER IMPORT PROCEDURES"
   },
   {
    "fieldname": "cl_plan",
    "fieldtype": "Select",
    "label": "CL Plan",
-   "options": "\nPAD\nPre-Arrival Declaration\nPMD, Post-Manifest Declaration\nLAD\nLand Arrival Declaration\nEWD\nEX Warehouse Declaration\nPBD\nPassangers Baggage Declaration\nCGD\nCourier Goods Declaration\nEXD\nExport Declaration\nPCD\nPre-Arrival Courier Declaration\nPOE\nPost Entry\nESA\nEscrow Accounts\nUCP\nUse for Other Purposes",
-   "reqd": 1
+   "options": "\nPAD Pre-Arrival Declaration\nPMD Post-Manifest Declaration\nLAD Land Arrival Declaration\nEWD EX Warehouse Declaration\nPBD Passangers Baggage Declaration\nCGD Courier Goods Declaration\nEXD Export Declaration\nPCD Pre-Arrival Courier Declaration\nPOE Post Entry\nESA Escrow Accounts\nUCP Use for Other Purposes"
   },
   {
    "fieldname": "column_break_wpwwj",
@@ -358,7 +353,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-08 00:19:55.304939",
+ "modified": "2025-04-15 16:53:28.715264",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

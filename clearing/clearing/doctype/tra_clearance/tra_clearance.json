@@ -154,7 +154,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-24 15:48:05.619888",
+ "modified": "2025-04-15 16:53:03.470018",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",
@@ -174,6 +174,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [

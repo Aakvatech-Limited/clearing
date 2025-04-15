@@ -116,8 +116,9 @@
   },
   {
    "fieldname": "country_of_destination",
-   "fieldtype": "Data",
-   "label": "Country of Destination"
+   "fieldtype": "Link",
+   "label": "Country of Destination",
+   "options": "Country"
   },
   {
    "fieldname": "quantity_of_hs_code",
@@ -128,7 +129,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-09 16:14:35.402894",
+ "modified": "2025-04-15 12:09:56.621843",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Cargo",

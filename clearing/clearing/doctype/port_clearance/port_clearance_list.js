@@ -1,4 +1,4 @@
-frappe.listview_settings["TRA Clearance"] = {
+frappe.listview_settings["Port Clearance"] = {
   add_fields: ["status", "docstatus"],
   has_indicator_for_draft: 1,
   get_indicator: function (doc) {

@@ -7,56 +7,47 @@ frappe.ui.form.on("Shipping Line Clearance", {
     customizeAttachDocumentsButton();
 
     if (frm.doc.clearing_file) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: { doctype: "Clearing File", name: frm.doc.clearing_file },
-        callback: function (r) {
-          if (
-            r.message &&
-            (r.message.status === "Pre-Lodged" ||
-              r.message.status === "On Process")
-          ) {
-            handle_clearance_creation(
-              "TRA Clearance",
-              "TRA Clearance",
-              { clearing_file: frm.doc.clearing_file },
-              {
-                doctype: "TRA Clearance",
-                clearing_file: frm.doc.clearing_file,
-                customer: frm.doc.customer,
-                status: "Payment Pending",
-              },
-              "TRA Clearance created successfully"
-            );
-
-            handle_clearance_creation(
-              "Physical Verification",
-              "Physical Verification",
-              { clearing_file: frm.doc.clearing_file },
-              {
-                doctype: "Physical Verification",
-                clearing_file: frm.doc.clearing_file,
-                customer: frm.doc.customer,
-                status: "Payment Pending",
-              },
-              "Physical Verification created successfully"
-            );
-
-            handle_clearance_creation(
-              "Port Clearance",
-              "Port Clearance",
-              { clearing_file: frm.doc.clearing_file },
-              {
-                doctype: "Port Clearance",
-                clearing_file: frm.doc.clearing_file,
-                customer: frm.doc.customer,
-                status: "Unpaid",
-              },
-              "Port Clearance created successfully"
-            );
-          }
+      handle_clearance_creation(
+        frm,
+        "TRA Clearance",
+        "TRA Clearance",
+        { clearing_file: frm.doc.clearing_file },
+        {
+          doctype: "TRA Clearance",
+          clearing_file: frm.doc.clearing_file,
+          customer: frm.doc.customer,
+          status: "Payment Pending",
         },
-      });
+        "TRA Clearance created successfully"
+      );
+
+      handle_clearance_creation(
+        frm,
+        "Physical Verification",
+        "Physical Verification",
+        { clearing_file: frm.doc.clearing_file },
+        {
+          doctype: "Physical Verification",
+          clearing_file: frm.doc.clearing_file,
+          customer: frm.doc.customer,
+          status: "Payment Pending",
+        },
+        "Physical Verification created successfully"
+      );
+
+      handle_clearance_creation(
+        frm,
+        "Port Clearance",
+        "Port Clearance",
+        { clearing_file: frm.doc.clearing_file },
+        {
+          doctype: "Port Clearance",
+          clearing_file: frm.doc.clearing_file,
+          customer: frm.doc.customer,
+          status: "Unpaid",
+        },
+        "Port Clearance created successfully"
+      );
     }
   },
 
@@ -66,13 +57,14 @@ frappe.ui.form.on("Shipping Line Clearance", {
 });
 
 function handle_clearance_creation(
+  frm,
   doctype,
   label,
   filters,
   new_doc_data,
   success_message
 ) {
-  cur_frm.add_custom_button(
+  frm.add_custom_button(
     __(label),
     function () {
       frappe.call({
@@ -81,8 +73,8 @@ function handle_clearance_creation(
         callback: function (r) {
           if (r.message?.length > 0) {
             frappe.set_route("Form", doctype, r.message[0].name);
-            if (cur_frm.doc.status === "Pre-Lodged")
-              cur_frm.set_value("status", "On Process").save_or_update();
+            if (frm.doc.status === "Pre-Lodged")
+              frm.set_value("status", "On Process").save_or_update();
           } else {
             frappe.call({
               method: "frappe.client.insert",
@@ -91,7 +83,7 @@ function handle_clearance_creation(
                 if (!r.exc) {
                   frappe.msgprint(__(success_message));
                   frappe.set_route("Form", doctype, r.message.name);
-                  cur_frm.set_value("status", "On Process").save_or_update();
+                  frm.set_value("status", "On Process").save_or_update();
                 }
               },
             });

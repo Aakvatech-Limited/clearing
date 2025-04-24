@@ -74,7 +74,6 @@
   {
    "fieldname": "customer_address",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Consignee Address",
    "options": "Address"
   },
@@ -353,7 +352,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-15 16:53:28.715264",
+ "modified": "2025-04-16 16:31:12.591380",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

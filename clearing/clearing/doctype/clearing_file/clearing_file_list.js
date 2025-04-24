@@ -1,14 +1,17 @@
 frappe.listview_settings["Clearing File"] = {
-  add_fields: ["status", "tansad_no", "reference_no"],
+  add_fields: ["status", "docstatus", "tansad_no", "reference_no"],
+  has_indicator_for_draft: 1,
   get_indicator: function (doc) {
     const status_map = {
       Open: "orange",
-      "Pre-Lodged": "green",
+      "Pre-Lodged": "blue",
       "On Process": "blue",
-      Cleared: "green",
+      Cleared: "gray",
       Delivered: "green",
-      "Bills Paid": "red",
+      bills_paid: "gray",
+      Cancelled: "red",
     };
+
     return [__(doc.status), status_map[doc.status], "status,=," + doc.status];
   },
   filters: [

@@ -53,7 +53,8 @@
   "tansad_no",
   "column_break_wpwwj",
   "declaration_type",
-  "cl_plan"
+  "cl_plan",
+  "awbbl_no"
  ],
  "fields": [
   {
@@ -346,14 +347,21 @@
    "label": "Cargo Country of Origin",
    "options": "Country",
    "reqd": 1
+  },
+  {
+   "fieldname": "awbbl_no",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "AWB/BL No"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-16 16:31:12.591380",
- "modified_by": "Administrator",
+ "modified": "2025-04-24 17:44:40.277157",
+ "modified_by": "emanuelkagombora28@gmail.com",
  "module": "Clearing",
  "name": "Clearing File",
  "naming_rule": "Expression",

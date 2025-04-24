@@ -1,5 +1,5 @@
 frappe.listview_settings["Clearing File"] = {
-  add_fields: ["status", "docstatus", "tansad_no", "reference_no"],
+  add_fields: ["status", "docstatus", "tansad_no", "reference_no", "awbbl_no"],
   has_indicator_for_draft: 1,
   get_indicator: function (doc) {
     const status_map = {
@@ -32,6 +32,11 @@ frappe.listview_settings["Clearing File"] = {
     {
       fieldname: "reference_no",
       label: __("Reference No"),
+      fieldtype: "Data",
+    },
+    {
+      fieldname: "awbbl_no",
+      label: __("AWB/BL No"),
       fieldtype: "Data",
     },
   ],

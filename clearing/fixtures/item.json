@@ -47,7 +47,7 @@
     "item_defaults": [
       {
         "buying_cost_center": null,
-        "company": "Clearing Company",
+        "company": "Company C",
         "default_discount_account": null,
         "default_price_list": null,
         "default_provisional_account": null,
@@ -157,7 +157,7 @@
     "item_defaults": [
       {
         "buying_cost_center": null,
-        "company": "Clearing Company",
+        "company": "Company C",
         "default_discount_account": null,
         "default_price_list": null,
         "default_provisional_account": null,
@@ -267,7 +267,7 @@
     "item_defaults": [
       {
         "buying_cost_center": null,
-        "company": "Clearing Company",
+        "company": "Company C",
         "default_discount_account": null,
         "default_price_list": null,
         "default_provisional_account": null,
@@ -377,7 +377,7 @@
     "item_defaults": [
       {
         "buying_cost_center": null,
-        "company": "Clearing Company",
+        "company": "Company C",
         "default_discount_account": null,
         "default_price_list": null,
         "default_provisional_account": null,

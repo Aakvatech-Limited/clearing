@@ -44,25 +44,6 @@
     "is_stock_item": 0,
     "is_sub_contracted_item": 0,
     "item_code": "TRA Clearance",
-    "item_defaults": [
-      {
-        "buying_cost_center": null,
-        "company": "Clearing Company",
-        "default_discount_account": null,
-        "default_price_list": null,
-        "default_provisional_account": null,
-        "default_supplier": null,
-        "default_warehouse": "Stores - CC",
-        "deferred_expense_account": null,
-        "deferred_revenue_account": null,
-        "expense_account": null,
-        "income_account": null,
-        "parent": "TRA Clearance",
-        "parentfield": "item_defaults",
-        "parenttype": "Item",
-        "selling_cost_center": null
-      }
-    ],
     "item_group": "Services",
     "item_name": "TRA Clearance",
     "last_purchase_rate": 0.0,
@@ -154,25 +135,6 @@
     "is_stock_item": 0,
     "is_sub_contracted_item": 0,
     "item_code": "Port Clearance",
-    "item_defaults": [
-      {
-        "buying_cost_center": null,
-        "company": "Clearing Company",
-        "default_discount_account": null,
-        "default_price_list": null,
-        "default_provisional_account": null,
-        "default_supplier": null,
-        "default_warehouse": "Stores - CC",
-        "deferred_expense_account": null,
-        "deferred_revenue_account": null,
-        "expense_account": null,
-        "income_account": null,
-        "parent": "Port Clearance",
-        "parentfield": "item_defaults",
-        "parenttype": "Item",
-        "selling_cost_center": null
-      }
-    ],
     "item_group": "Services",
     "item_name": "Port Clearance",
     "last_purchase_rate": 0.0,
@@ -264,25 +226,6 @@
     "is_stock_item": 0,
     "is_sub_contracted_item": 0,
     "item_code": "Shipping Line Clearance",
-    "item_defaults": [
-      {
-        "buying_cost_center": null,
-        "company": "Clearing Company",
-        "default_discount_account": null,
-        "default_price_list": null,
-        "default_provisional_account": null,
-        "default_supplier": null,
-        "default_warehouse": "Stores - CC",
-        "deferred_expense_account": null,
-        "deferred_revenue_account": null,
-        "expense_account": null,
-        "income_account": null,
-        "parent": "Shipping Line Clearance",
-        "parentfield": "item_defaults",
-        "parenttype": "Item",
-        "selling_cost_center": null
-      }
-    ],
     "item_group": "Services",
     "item_name": "Shipping Line Clearance",
     "last_purchase_rate": 0.0,
@@ -374,25 +317,6 @@
     "is_stock_item": 0,
     "is_sub_contracted_item": 0,
     "item_code": "Physical Verification",
-    "item_defaults": [
-      {
-        "buying_cost_center": null,
-        "company": "Clearing Company",
-        "default_discount_account": null,
-        "default_price_list": null,
-        "default_provisional_account": null,
-        "default_supplier": null,
-        "default_warehouse": "Stores - CC",
-        "deferred_expense_account": null,
-        "deferred_revenue_account": null,
-        "expense_account": null,
-        "income_account": null,
-        "parent": "Physical Verification",
-        "parentfield": "item_defaults",
-        "parenttype": "Item",
-        "selling_cost_center": null
-      }
-    ],
     "item_group": "Services",
     "item_name": "Physical Verification",
     "last_purchase_rate": 0.0,

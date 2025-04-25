@@ -58,6 +58,11 @@ app_license = "MIT"
 # 	"filters": "clearing.utils.jinja_filters"
 # }
 
+patches = [
+    "clearing.patches.set_dynamic_item_defaults",
+    "clearing.patches.import_clearing_document_types"
+]
+
 # Installation
 # ------------
 
@@ -227,46 +232,3 @@ doc_events = {
 # auth_hooks = [
 # 	"clearing.auth.validate"
 # ]
-fixtures = [
-    {
-        "dt": "Clearing Document Type",
-        "filters": [
-            [
-                "name", "in", [
-                    "Import Duty Payment Receipt",
-                    "Import Declaration",
-                    "Inspection Certificate",
-                    "Health Certificate",
-                    "Phytosanitary Certificate",
-                    "Letter of Credit (LC)",
-                    "Import License",
-                    "Packing List",
-                    "Bill of Lading B/L",
-                    "Air Waybill (AWB)",
-                    "Delivery Order",
-                    "Insurance Certificate",
-                    "Certificate of Origin",
-                    "Payment Note",
-                    "Bank Document",
-                    "Commercial Invoice",
-                    "Assessment Document",
-                    "Tanzania Bureau Of Standards - Debit Advice",
-                    "Pre-Export Verification of Conformity (PVoC)"
-                ]
-            ]
-        ]
-    },
-    {
-        "dt": "Item",
-        "filters": [
-            [
-                "name", "in", [
-                    "Port Clearance",
-                    "Shipping Line Clearance",
-                    "TRA Clearance",
-                    "Physical Verification"
-                ]
-            ]
-        ]
-    }
-]

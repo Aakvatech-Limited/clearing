@@ -13,18 +13,21 @@
    "fieldname": "attach_image",
    "fieldtype": "Attach Image",
    "in_standard_filter": 1,
-   "label": "Attach Image"
+   "label": "Attach Image",
+   "reqd": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-16 13:17:43.862639",
- "modified_by": "Administrator",
+ "modified": "2025-04-28 11:16:29.180631",
+ "modified_by": "emanuelkagombora28@gmail.com",
  "module": "Clearing",
  "name": "Physical Verification Image",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

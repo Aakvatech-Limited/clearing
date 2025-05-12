@@ -305,90 +305,64 @@ frappe.ui.form.on("Port Clearance", {
       size: "large",
       primary_action_label: "Submit",
       primary_action(values) {
-        // First check for duplicates
+        let attachment_url = document
+          .querySelector(".attached-file-link")
+          .getAttribute("href");
+
+        // Validate attributes before submitting
+        let invalid = false;
+        values.document_attributes.forEach((attr) => {
+          if (attr.mandatory && !attr.value) {
+            invalid = true;
+            frappe.msgprint({
+              title: __("Missing Value"),
+              message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
+              indicator: "red",
+            });
+          }
+        });
+
+        if (invalid) return; // Stop submission if invalid data
+
+        let clearing_document_attributes = values.document_attributes.map(
+          (attr) => ({
+            document_attribute: attr.attribute,
+            document_attribute_value: attr.value,
+            mandatory: attr.mandatory,
+          })
+        );
+
+        // Create Clearing Document
         frappe.call({
-          method: "frappe.client.get_list",
+          method: "frappe.client.insert",
           args: {
-            doctype: "Clearing Document",
-            filters: {
+            doc: {
+              doctype: "Clearing Document",
               clearing_file: frm.doc.clearing_file,
+              document_attachment: attachment_url,
+              clearing_document_type: values.document_type,
+              linked_file: "Port Clearance",
               document_type: values.document_type,
-              linked_file: "Port Clearance", // Change this for each doctype
+              clearing_document_attributes: clearing_document_attributes, // Handle child table
             },
-            fields: ["name"],
           },
-          callback: function (r) {
-            if (r.message && r.message.length > 0) {
-              frappe.throw(
+          callback: function (response) {
+            if (response && response.message) {
+              frappe.msgprint(__("Clearing Document created successfully."));
+              d.hide();
+              frm.refresh();
+            } else {
+              frappe.msgprint(
                 __(
-                  "This document type has already been attached to this Port Clearance."
+                  "There was an issue creating the Clearing Document. Please try again."
                 )
               );
-              return;
             }
-
-            let attachment_url = document
-              .querySelector(".attached-file-link")
-              .getAttribute("href");
-
-            // Validate attributes before submitting
-            let invalid = false;
-            values.document_attributes.forEach((attr) => {
-              if (attr.mandatory && !attr.value) {
-                invalid = true;
-                frappe.msgprint({
-                  title: __("Missing Value"),
-                  message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
-                  indicator: "red",
-                });
-              }
-            });
-
-            if (invalid) return; // Stop submission if invalid data
-
-            let clearing_document_attributes = values.document_attributes.map(
-              (attr) => ({
-                document_attribute: attr.attribute,
-                document_attribute_value: attr.value,
-                mandatory: attr.mandatory,
-              })
+          },
+          error: function (err) {
+            frappe.msgprint(
+              __("Failed to create Clearing Document. Please try again.")
             );
-
-            // Create Clearing Document
-            frappe.call({
-              method: "frappe.client.insert",
-              args: {
-                doc: {
-                  doctype: "Clearing Document",
-                  clearing_file: frm.doc.clearing_file,
-                  document_attachment: attachment_url,
-                  clearing_document_type: values.document_type,
-                  linked_file: "Port Clearance",
-                  document_type: values.document_type,
-                  clearing_document_attributes: clearing_document_attributes, // Handle child table
-                },
-              },
-              callback: function (response) {
-                if (response && response.message) {
-                  frappe.msgprint(
-                    __("Clearing Document created successfully.")
-                  );
-                  d.hide();
-                  frm.refresh();
-                } else {
-                  frappe.msgprint(
-                    __(
-                      "There was an issue creating the Clearing Document. Please try again."
-                    )
-                  );
-                }
-              },
-              error: function (err) {
-                frappe.msgprint(
-                  __("Failed to create Clearing Document. Please try again.")
-                );
-              },
-            });
           },
         });
       },

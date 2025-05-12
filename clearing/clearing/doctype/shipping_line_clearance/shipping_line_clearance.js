@@ -143,60 +143,44 @@ function openDocumentAttachmentDialog(frm) {
     size: "large",
     primary_action_label: "Submit",
     primary_action: function (values) {
+      // Validate mandatory attributes
+      const invalid = values.document_attributes.some(
+        (attr) => attr.mandatory && !attr.value
+      );
+      if (invalid) {
+        frappe.msgprint(__("Fill all mandatory attributes."));
+        return;
+      }
+
+      const attachment_url = d.get_value("attach_document");
+      if (!attachment_url) {
+        frappe.msgprint(__("Attach a file first!"));
+        return;
+      }
+
+      // Directly create the Clearing Document (no duplicate check)
       frappe.call({
-        method: "frappe.client.get_list",
+        method: "frappe.client.insert",
         args: {
-          doctype: "Clearing Document",
-          filters: {
+          doc: {
+            doctype: "Clearing Document",
             clearing_file: frm.doc.clearing_file,
-            document_type: values.document_type,
+            document_attachment: attachment_url,
             linked_file: "Shipping Line Clearance",
+            document_type: values.document_type,
+            clearing_document_attributes: values.document_attributes.map(
+              (attr) => ({
+                document_attribute: attr.attribute,
+                document_attribute_value: attr.value,
+                mandatory: attr.mandatory,
+              })
+            ),
           },
         },
-        callback: function (r) {
-          if (r.message?.length > 0) {
-            frappe.throw(__("Document already attached!"));
-            return;
-          }
-
-          const invalid = values.document_attributes.some(
-            (attr) => attr.mandatory && !attr.value
-          );
-          if (invalid) {
-            frappe.msgprint(__("Fill all mandatory attributes."));
-            return;
-          }
-
-          const attachment_url = d.get_value("attach_document");
-          if (!attachment_url) {
-            frappe.msgprint(__("Attach a file first!"));
-            return;
-          }
-
-          frappe.call({
-            method: "frappe.client.insert",
-            args: {
-              doc: {
-                doctype: "Clearing Document",
-                clearing_file: frm.doc.clearing_file,
-                document_attachment: attachment_url,
-                linked_file: "Shipping Line Clearance",
-                document_type: values.document_type,
-                clearing_document_attributes: values.document_attributes.map(
-                  (attr) => ({
-                    document_attribute: attr.attribute,
-                    document_attribute_value: attr.value,
-                    mandatory: attr.mandatory,
-                  })
-                ),
-              },
-            },
-            callback: function () {
-              frappe.msgprint(__("Document attached successfully!"));
-              d.hide();
-              frm.refresh();
-            },
-          });
+        callback: function () {
+          frappe.msgprint(__("Document attached successfully!"));
+          d.hide();
+          frm.refresh();
         },
       });
     },

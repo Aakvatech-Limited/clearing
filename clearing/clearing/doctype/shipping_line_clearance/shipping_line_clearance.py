@@ -5,7 +5,6 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
-from clearing.clearing.utils import validate_unique_document
 
 class ShippingLineClearance(Document):
     def validate(self):
@@ -15,13 +14,6 @@ class ShippingLineClearance(Document):
                 _("Shipping Line Clearance cannot be created for Air transport"),
                 title=_("Invalid Mode of Transport")
             )
-        # Validate unique documents
-        if not self.get("documents"):
-            self.set("documents", [])
-            
-        # For documents attached via child table
-        for doc in self.get("documents"):
-            validate_unique_document(doc)
 
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""

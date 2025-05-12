@@ -2,21 +2,10 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
-from clearing.clearing.utils import validate_unique_document
 
 
 class TRAClearance(Document):
-    def validate(self):
-        if not self.get("documents"):
-            self.set("documents", [])
-            
-        # For documents attached via child table
-        for doc in self.get("documents"):
-            validate_unique_document(doc)
-    
-    def before_save(self):
-
-        
+    def before_save(self):  
         """Before saving the document, check if invoice is paid and update the status."""
         if self.invoice_paid:
             # If the invoice is paid, automatically set the status to 'Payment Completed'

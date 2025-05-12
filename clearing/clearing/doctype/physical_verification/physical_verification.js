@@ -225,91 +225,65 @@ frappe.ui.form.on("Physical Verification", {
       size: "large",
       primary_action_label: "Submit",
       primary_action(values) {
-        // First check for duplicates
+        let attachment_url = document
+          .querySelector(".attached-file-link")
+          .getAttribute("href");
+
+        // Validate mandatory fields
+        let invalid = false;
+        values.document_attributes.forEach((attr) => {
+          if (attr.mandatory && !attr.value) {
+            invalid = true;
+            frappe.msgprint({
+              title: __("Missing Value"),
+              message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
+              indicator: "red",
+            });
+          }
+        });
+
+        // If validation fails, stop submission
+        if (invalid) return;
+
+        // Prepare the child table data
+        let clearing_document_attributes = values.document_attributes.map(
+          (attr) => ({
+            document_attribute: attr.attribute,
+            document_attribute_value: attr.value,
+            mandatory: attr.mandatory,
+          })
+        );
+
+        // Use Frappe API to create the Clearing Document
         frappe.call({
-          method: "frappe.client.get_list",
+          method: "frappe.client.insert",
           args: {
-            doctype: "Clearing Document",
-            filters: {
+            doc: {
+              doctype: "Clearing Document",
               clearing_file: frm.doc.clearing_file,
+              document_attachment: attachment_url,
               document_type: values.document_type,
-              linked_file: "Physical Verification", // Change this for each doctype
+              linked_file: "Physical Verification",
+              clearing_document_attributes: clearing_document_attributes, // Handle child table
             },
-            fields: ["name"],
           },
-          callback: function (r) {
-            if (r.message && r.message.length > 0) {
-              frappe.throw(
+          callback: function (response) {
+            if (response && response.message) {
+              frappe.msgprint(__("Clearing Document created successfully."));
+              d.hide();
+              frm.refresh();
+            } else {
+              frappe.msgprint(
                 __(
-                  "This document type has already been attached to this Physical Verification."
+                  "There was an issue creating the Clearing Document. Please try again."
                 )
               );
-              return;
             }
-
-            let attachment_url = document
-              .querySelector(".attached-file-link")
-              .getAttribute("href");
-
-            // Validate mandatory fields
-            let invalid = false;
-            values.document_attributes.forEach((attr) => {
-              if (attr.mandatory && !attr.value) {
-                invalid = true;
-                frappe.msgprint({
-                  title: __("Missing Value"),
-                  message: `Please fill the value for ${attr.attribute} as it is mandatory.`,
-                  indicator: "red",
-                });
-              }
-            });
-
-            // If validation fails, stop submission
-            if (invalid) return;
-
-            // Prepare the child table data
-            let clearing_document_attributes = values.document_attributes.map(
-              (attr) => ({
-                document_attribute: attr.attribute,
-                document_attribute_value: attr.value,
-                mandatory: attr.mandatory,
-              })
+          },
+          error: function (err) {
+            frappe.msgprint(
+              __("Failed to create Clearing Document. Please try again.")
             );
-
-            // Use Frappe API to create the Clearing Document
-            frappe.call({
-              method: "frappe.client.insert",
-              args: {
-                doc: {
-                  doctype: "Clearing Document",
-                  clearing_file: frm.doc.clearing_file,
-                  document_attachment: attachment_url,
-                  document_type: values.document_type,
-                  linked_file: "Physical Verification",
-                  clearing_document_attributes: clearing_document_attributes, // Handle child table
-                },
-              },
-              callback: function (response) {
-                if (response && response.message) {
-                  frappe.msgprint(
-                    __("Clearing Document created successfully.")
-                  );
-                  d.hide();
-                  frm.refresh();
-                } else {
-                  frappe.msgprint(
-                    __(
-                      "There was an issue creating the Clearing Document. Please try again."
-                    )
-                  );
-                }
-              },
-              error: function (err) {
-                frappe.msgprint(
-                  __("Failed to create Clearing Document. Please try again.")
-                );
-              },
-            });
           },
         });
       },

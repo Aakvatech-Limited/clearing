@@ -30,6 +30,11 @@
   "departure_date",
   "arrival_date",
   "cargo_country_of_origin",
+  "has_transit_bond",
+  "valid_from",
+  "valid_to",
+  "bond_returned",
+  "bond_release_date",
   "cargo_details_section",
   "cargo_details",
   "section_break_xl9ew",
@@ -354,14 +359,51 @@
    "in_filter": 1,
    "in_standard_filter": 1,
    "label": "AWB/BL No"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_transit_bond",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Has Transit Bond"
+  },
+  {
+   "depends_on": "eval:doc.has_transit_bond == 1",
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Valid From",
+   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
+  },
+  {
+   "depends_on": "eval:doc.has_transit_bond == 1",
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To",
+   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
+  },
+  {
+   "default": "0",
+   "fieldname": "bond_returned",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Bond Returned"
+  },
+  {
+   "depends_on": "eval:doc.bond_returned == 1",
+   "fieldname": "bond_release_date",
+   "fieldtype": "Date",
+   "label": "Bond Release Date",
+   "mandatory_depends_on": "eval:doc.bond_returned == 1"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-24 17:44:40.277157",
- "modified_by": "emanuelkagombora28@gmail.com",
+ "modified": "2025-07-27 08:22:54.292320",
+ "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",
  "naming_rule": "Expression",

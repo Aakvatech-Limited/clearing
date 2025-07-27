@@ -10,6 +10,9 @@
  "field_order": [
   "clearing_file",
   "cf_delivery_note",
+  "has_transit_bond",
+  "valid_from",
+  "valid_to",
   "column_break_dfl0o",
   "consignee",
   "status",
@@ -154,12 +157,32 @@
    "label": "Delivery Note",
    "options": "CF Delivery Note",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_transit_bond",
+   "fieldtype": "Check",
+   "label": "Has Transit Bond"
+  },
+  {
+   "depends_on": "eval:doc.has_transit_bond == 1",
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Valid From",
+   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
+  },
+  {
+   "depends_on": "eval:doc.has_transit_bond == 1",
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To",
+   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-14 16:07:23.997337",
+ "modified": "2025-07-27 09:58:58.808812",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",
@@ -179,6 +202,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

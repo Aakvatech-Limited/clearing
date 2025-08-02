@@ -12,6 +12,8 @@
   "column_break_ahtow",
   "status",
   "consigee",
+  "section_break_ccym",
+  "disbursement",
   "service_charge_details_section",
   "charges",
   "section_break_0qrth",
@@ -134,11 +136,21 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Total Charges"
+  },
+  {
+   "fieldname": "section_break_ccym",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "disbursement",
+   "fieldtype": "Table",
+   "label": "Disbursement",
+   "options": "Consignee Disbursement"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-18 09:52:01.724931",
+ "modified": "2025-08-02 12:38:37.141045",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",
@@ -158,6 +170,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import nowdate
 
 
 class CFDeliveryNote(Document):
@@ -32,3 +33,16 @@ class CFDeliveryNote(Document):
                     "The linked Clearing File {0} is not cleared. You must clear it before submitting the Delivery Note."
                 ).format(self.clearing_file)
             )
+
+    def on_update(self):
+        if self.has_container_interchange:
+            exists = frappe.db.exists("Container Interchange", {
+                "clearing_file": self.clearing_file,
+                "posting_date": self.posting_date
+            })
+
+            if not exists:
+                container = frappe.new_doc("Container Interchange")
+                container.clearing_file = self.clearing_file
+                container.posting_date = self.posting_date or nowdate()
+                container.insert()

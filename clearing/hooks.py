@@ -62,7 +62,9 @@ app_license = "MIT"
 # ------------
 
 # before_install = "clearing.install.before_install"
-# after_install = "clearing.install.after_install"
+after_install = [
+    "clearing.patches.load_fixtures.execute",
+]
 
 before_delete = [
     "clearing.clearing.utils.allow_deletion_with_confirmation"
@@ -227,46 +229,6 @@ doc_events = {
 # auth_hooks = [
 # 	"clearing.auth.validate"
 # ]
-fixtures = [
-    {
-        "dt": "Clearing Document Type",
-        "filters": [
-            [
-                "name", "in", [
-                    "Import Duty Payment Receipt",
-                    "Import Declaration",
-                    "Inspection Certificate",
-                    "Health Certificate",
-                    "Phytosanitary Certificate",
-                    "Letter of Credit (LC)",
-                    "Import License",
-                    "Packing List",
-                    "Bill of Lading B/L",
-                    "Air Waybill (AWB)",
-                    "Delivery Order",
-                    "Insurance Certificate",
-                    "Certificate of Origin",
-                    "Payment Note",
-                    "Bank Document",
-                    "Commercial Invoice",
-                    "Assessment Document",
-                    "Tanzania Bureau Of Standards - Debit Advice",
-                    "Pre-Export Verification of Conformity (PVoC)"
-                ]
-            ]
-        ]
-    },
-    {
-        "dt": "Item",
-        "filters": [
-            [
-                "name", "in", [
-                    "Port Clearance",
-                    "Shipping Line Clearance",
-                    "TRA Clearance",
-                    "Physical Verification"
-                ]
-            ]
-        ]
-    }
-]
+# fixtures = [
+#     # All fixtures are now handled through patches/load_fixtures.py
+# ]

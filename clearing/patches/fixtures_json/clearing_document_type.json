@@ -1198,5 +1198,215 @@
   "linked_document": null,
   "modified": "2024-08-16 15:32:28.905733",
   "name": "Import Duty Payment Receipt"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Charge Item",
+        "parent": "Additional Charge-Port Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Charge Amount",
+        "parent": "Additional Charge-Port Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid on Behalf on Consignee",
+        "parent": "Additional Charge-Port Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid Date",
+        "parent": "Additional Charge-Port Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Reference",
+        "parent": "Additional Charge-Port Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Additional Charge-Port Clearance",
+    "linked_document": "Port Clearance",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Additional Charge-Port Clearance"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Charge Amount",
+        "parent": "Additional Charge-Shipping Line Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid on Behalf on Consignee",
+        "parent": "Additional Charge-Shipping Line Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid Date",
+        "parent": "Additional Charge-Shipping Line Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Reference",
+        "parent": "Additional Charge-Shipping Line Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Additional Charge-Shipping Line Clearance",
+    "linked_document": "Shipping Line Clearance",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Additional Charge-Shipping Line Clearance"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Paid on Behalf on Consignee",
+        "parent": "Additional Charge-TRA Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid Date",
+        "parent": "Additional Charge-TRA Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Reference",
+        "parent": "Additional Charge-TRA Clearance",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Additional Charge-TRA Clearance",
+    "linked_document": "TRA Clearance",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Additional Charge-TRA Clearance"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Paid on Behalf on Consignee",
+        "parent": "Additional Charge-Physical Verification",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Paid Date",
+        "parent": "Additional Charge-Physical Verification",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Reference",
+        "parent": "Additional Charge-Physical Verification",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Additional Charge-Physical Verification",
+    "linked_document": "Physical Verification",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Additional Charge-Physical Verification"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Bond ID",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Date of Issue",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Surety Details",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Bond Amount",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Route",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Return Reference",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Closed By",
+        "parent": "Transit Bond",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Transit Bond",
+    "linked_document": "Port Clearance",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Transit Bond"
+  },
+  {
+    "clearing_document_attribute": [
+      {
+        "document_attribute": "Reference number",
+        "parent": "Equipment Interchange Receipt (EIR)",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Date and time of interchange",
+        "parent": "Equipment Interchange Receipt (EIR)",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      },
+      {
+        "document_attribute": "Gate in/Gate out",
+        "parent": "Equipment Interchange Receipt (EIR)",
+        "parentfield": "clearing_document_attribute",
+        "parenttype": "Clearing Document Type"
+      }
+    ],
+    "docstatus": 0,
+    "doctype": "Clearing Document Type",
+    "document_type": "Equipment Interchange Receipt (EIR)",
+    "linked_document": "Port Clearance",
+    "modified": "2024-08-02 12:00:00.000000",
+    "name": "Equipment Interchange Receipt (EIR)"
  }
 ]

@@ -7,52 +7,79 @@ frappe.ui.form.on("Shipping Line Clearance", {
     customizeAttachDocumentsButton();
 
     if (frm.doc.clearing_file) {
-      handle_clearance_creation(
-        frm,
-        "TRA Clearance",
-        "TRA Clearance",
-        { clearing_file: frm.doc.clearing_file },
-        {
-          doctype: "TRA Clearance",
-          clearing_file: frm.doc.clearing_file,
-          customer: frm.doc.customer,
-          status: "Payment Pending",
+      // Fetch clearing file data to get declaration type
+      frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "Clearing File",
+          name: frm.doc.clearing_file,
         },
-        "TRA Clearance created successfully"
-      );
+        callback: function (r) {
+          if (r.message) {
+            handle_clearance_creation(
+              frm,
+              "TRA Clearance",
+              "TRA Clearance",
+              { clearing_file: frm.doc.clearing_file },
+              {
+                doctype: "TRA Clearance",
+                clearing_file: frm.doc.clearing_file,
+                customer: frm.doc.customer,
+                status: "Payment Pending",
+              },
+              "TRA Clearance created successfully"
+            );
 
-      handle_clearance_creation(
-        frm,
-        "Physical Verification",
-        "Physical Verification",
-        { clearing_file: frm.doc.clearing_file },
-        {
-          doctype: "Physical Verification",
-          clearing_file: frm.doc.clearing_file,
-          customer: frm.doc.customer,
-          status: "Payment Pending",
-        },
-        "Physical Verification created successfully"
-      );
+            handle_clearance_creation(
+              frm,
+              "Physical Verification",
+              "Physical Verification",
+              { clearing_file: frm.doc.clearing_file },
+              {
+                doctype: "Physical Verification",
+                clearing_file: frm.doc.clearing_file,
+                customer: frm.doc.customer,
+                status: "Payment Pending",
+              },
+              "Physical Verification created successfully"
+            );
 
-      handle_clearance_creation(
-        frm,
-        "Port Clearance",
-        "Port Clearance",
-        { clearing_file: frm.doc.clearing_file },
-        {
-          doctype: "Port Clearance",
-          clearing_file: frm.doc.clearing_file,
-          customer: frm.doc.customer,
-          status: "Unpaid",
+            // Port Clearance with transit bond logic
+            let port_clearance_data = {
+              doctype: "Port Clearance",
+              clearing_file: frm.doc.clearing_file,
+              customer: frm.doc.customer,
+              status: "Unpaid",
+            };
+
+            // Auto-check has_transit_bond for IM8 declaration type
+            if (r.message.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+              port_clearance_data.has_transit_bond = 1;
+            }
+
+            handle_clearance_creation(
+              frm,
+              "Port Clearance",
+              "Port Clearance",
+              { clearing_file: frm.doc.clearing_file },
+              port_clearance_data,
+              "Port Clearance created successfully"
+            );
+          }
         },
-        "Port Clearance created successfully"
-      );
+      });
     }
   },
 
-  attach_documents: function (frm) {
-    openDocumentAttachmentDialog(frm);
+  attach_documents: async function (frm) {
+    if (frm.doc.__unsaved) {
+      frappe.msgprint(
+        __("Please save the document before attaching documents.")
+      );
+      return;
+    }
+
+    await openDocumentAttachmentDialog(frm);
   },
 });
 
@@ -72,21 +99,19 @@ function handle_clearance_creation(
         args: { doctype: doctype, filters: filters, limit: 1 },
         callback: function (r) {
           if (r.message?.length > 0) {
+            // Document exists, open it
             frappe.set_route("Form", doctype, r.message[0].name);
-            if (frm.doc.status === "Pre-Lodged")
-              frm.set_value("status", "On Process").save_or_update();
           } else {
-            frappe.call({
-              method: "frappe.client.insert",
-              args: { doc: new_doc_data },
-              callback: function (r) {
-                if (!r.exc) {
-                  frappe.msgprint(__(success_message));
-                  frappe.set_route("Form", doctype, r.message.name);
-                  frm.set_value("status", "On Process").save_or_update();
-                }
-              },
-            });
+            // Create a new unsaved document
+            let new_doc = frappe.model.get_new_doc(doctype);
+
+            // Set the basic fields
+            Object.assign(new_doc, new_doc_data);
+
+            // Open the new document form without saving
+            frappe.set_route("Form", doctype, new_doc.name);
+
+            frappe.msgprint(__(success_message + " Please fill in the required fields and save."));
           }
         },
       });
@@ -136,29 +161,31 @@ function customizeAttachDocumentsButton() {
   }
 }
 
-function openDocumentAttachmentDialog(frm) {
+
+async function openDocumentAttachmentDialog(frm) {
+  if (frm.is_new()) {
+    await frm.save();
+  }
+
   const d = new frappe.ui.Dialog({
     title: "Attach Document",
-    fields: getDialogFields(),
+    fields: getDialogFields(frm),
     size: "large",
     primary_action_label: "Submit",
-    primary_action: function (values) {
-      // Validate mandatory attributes
-      const invalid = values.document_attributes.some(
-        (attr) => attr.mandatory && !attr.value
-      );
+    primary_action(values) {
+      const attributes = values.document_attributes || [];
+      const invalid = attributes.some((attr) => attr.mandatory && !attr.value);
       if (invalid) {
-        frappe.msgprint(__("Fill all mandatory attributes."));
+        frappe.msgprint("Fill all mandatory attributes.");
         return;
       }
 
       const attachment_url = d.get_value("attach_document");
       if (!attachment_url) {
-        frappe.msgprint(__("Attach a file first!"));
+        frappe.msgprint("Attach a file first!");
         return;
       }
 
-      // Directly create the Clearing Document (no duplicate check)
       frappe.call({
         method: "frappe.client.insert",
         args: {
@@ -168,31 +195,39 @@ function openDocumentAttachmentDialog(frm) {
             document_attachment: attachment_url,
             linked_file: "Shipping Line Clearance",
             document_type: values.document_type,
-            clearing_document_attributes: values.document_attributes.map(
-              (attr) => ({
-                document_attribute: attr.attribute,
-                document_attribute_value: attr.value,
-                mandatory: attr.mandatory,
-              })
-            ),
+            clearing_document_attributes: attributes.map((attr) => ({
+              document_attribute: attr.attribute,
+              document_attribute_value: attr.value,
+              mandatory: attr.mandatory,
+            })),
           },
         },
-        callback: function () {
-          frappe.msgprint(__("Document attached successfully!"));
+        callback() {
+          frappe.msgprint("Document attached successfully!");
           d.hide();
-          frm.refresh();
+          frm.reload_doc();
         },
       });
     },
   });
 
+  const attach_field = d.get_field("attach_document");
+  if (attach_field) {
+    attach_field.df.options = Object.assign({}, attach_field.df.options, {
+      doctype: frm.doctype,
+      docname: frm.doc.name,
+    });
+    attach_field.refresh();
+  }
+
   d.fields_dict.document_type.get_query = () => ({
     filters: { linked_document: "Shipping Line Clearance" },
   });
+
   d.show();
 }
 
-function getDialogFields() {
+function getDialogFields(frm) {
   return [
     {
       label: "Document Type",
@@ -203,13 +238,14 @@ function getDialogFields() {
         const document_type = this.get_value();
         if (!document_type) return;
 
+        const dialog = frappe.ui.get_open_dialog();
+        if (!dialog) return;
+
         frappe.call({
           method: "frappe.client.get",
           args: { doctype: "Clearing Document Type", name: document_type },
           callback: function (r) {
-            const attributes_table = cur_dialog.get_field(
-              "document_attributes"
-            ).grid;
+            const attributes_table = dialog.get_field("document_attributes").grid;
             attributes_table.df.data = (
               r.message?.clearing_document_attribute || []
             ).map((attr) => ({
@@ -228,6 +264,12 @@ function getDialogFields() {
       fieldname: "attach_document",
       fieldtype: "Attach",
       reqd: 1,
+      options: frm
+        ? {
+            doctype: frm.doctype,
+            docname: frm.doc && frm.doc.name,
+          }
+        : undefined,
     },
     { fieldname: "section_break", fieldtype: "Section Break" },
     {

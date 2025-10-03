@@ -10,21 +10,22 @@
  "field_order": [
   "clearing_file",
   "consignee",
+  "isuue_date",
   "delivery_order_expire_date",
   "drop_off_date",
   "container_deposit_amount",
+  "container_deposit_date",
   "column_break_a2owv",
   "posting_date",
   "status",
   "staff_id",
   "staff_name",
-  "container_deposit_returned",
+  "invoice_received",
   "total_charges_section",
   "total_charges",
   "column_break_r0s5o",
   "paid_by_clearing_agent",
   "invoice_paid",
-  "invoice_received",
   "section_break_keyml",
   "attach_documents",
   "section_break_uevyo",
@@ -69,7 +70,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Today",
+   "default": "now",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
@@ -164,16 +165,20 @@
    "label": "Container Deposit Amount"
   },
   {
-   "default": "0",
-   "fieldname": "container_deposit_returned",
-   "fieldtype": "Check",
-   "label": "Container Deposit Returned"
+   "fieldname": "isuue_date",
+   "fieldtype": "Date",
+   "label": "Delivery Order Issue Date"
+  },
+  {
+   "fieldname": "container_deposit_date",
+   "fieldtype": "Date",
+   "label": "Container Deposit Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-03 17:55:29.746480",
+ "modified": "2025-10-02 08:04:32.796764",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",
@@ -190,6 +195,33 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Clearing Agent",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "TRA Clearing Agent",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

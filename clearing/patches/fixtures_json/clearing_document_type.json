@@ -340,115 +340,7 @@
  {
   "clearing_document_attribute": [
    {
-    "document_attribute": "Exporter Declaration Type",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Processing/Clearing office",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
     "document_attribute": "TANSAD Number & Date",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": " CL. Plan",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Consignee Freight Charges",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Currency",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Total Invoice Value ",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Invoice No. & Date",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Insurance",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "No Pckgs",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Gross Weight",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "AWB/BL/RCN/Shipping Order",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Clearing Agent Ref. No & Date",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "H.S. Code",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "Item (s) Description",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "IMP",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "CPF",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "RDL",
-    "parent": "Assessment Document",
-    "parentfield": "clearing_document_attribute",
-    "parenttype": "Clearing Document Type"
-   },
-   {
-    "document_attribute": "VAT",
     "parent": "Assessment Document",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
@@ -1408,5 +1300,127 @@
     "linked_document": "Port Clearance",
     "modified": "2024-08-02 12:00:00.000000",
     "name": "Equipment Interchange Receipt (EIR)"
+ },
+ {
+  "clearing_document_attribute": [
+   {
+    "document_attribute": "Letter Number",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Issue Date",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Authorizing Authority",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Authorized Person/Entity",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Purpose of Authorization",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Scope of Authorization",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Validity Period",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Reference Documents",
+    "parent": "Authorisation Letter",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   }
+  ],
+  "docstatus": 0,
+  "doctype": "Clearing Document Type",
+  "document_type": "Authorisation Letter",
+  "linked_document": "Clearing File",
+  "modified": "2025-01-19 12:00:00.000000",
+  "name": "Authorisation Letter"
+ },
+ {
+  "clearing_document_attribute": [
+   {
+    "document_attribute": "C.41 Number",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Issue Date",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Issuing Office",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Consignee Details",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Goods Description",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Customs Value",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Duty Assessment",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Release Authorization",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   },
+   {
+    "document_attribute": "Validity Period",
+    "parent": "C.41",
+    "parentfield": "clearing_document_attribute",
+    "parenttype": "Clearing Document Type"
+   }
+  ],
+  "docstatus": 0,
+  "doctype": "Clearing Document Type",
+  "document_type": "C.41",
+  "linked_document": "Clearing File",
+  "modified": "2025-01-19 12:00:00.000000",
+  "name": "C.41"
  }
 ]

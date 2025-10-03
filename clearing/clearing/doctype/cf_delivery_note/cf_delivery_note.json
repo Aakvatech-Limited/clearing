@@ -24,8 +24,12 @@
   "sub_contract_company",
   "section_break_rjgdp",
   "truck",
+  "section_break_fzvx",
   "has_container_interchange",
-  "return_date",
+  "interchange_date_and_time",
+  "column_break_ufme",
+  "container_interchange",
+  "section_break_gttf",
   "amended_from"
  ],
  "fields": [
@@ -126,13 +130,6 @@
    "label": "Has Container Interchange"
   },
   {
-   "depends_on": "eval:doc.has_container_interchange == 1",
-   "fieldname": "return_date",
-   "fieldtype": "Date",
-   "label": "Return Date ",
-   "mandatory_depends_on": "eval:doc.has_container_interchange == 1"
-  },
-  {
    "fieldname": "staff_id",
    "fieldtype": "Link",
    "label": "Staff Id",
@@ -149,13 +146,39 @@
    "fieldname": "loading_date",
    "fieldtype": "Date",
    "label": "Loading Date"
+  },
+  {
+   "fieldname": "section_break_fzvx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_ufme",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "container_interchange",
+   "fieldtype": "Link",
+   "label": "Container Interchange",
+   "options": "Container Interchange",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gttf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.has_container_interchange == 1",
+   "fieldname": "interchange_date_and_time",
+   "fieldtype": "Datetime",
+   "label": "Interchange Date and Time",
+   "mandatory_depends_on": "eval:doc.has_container_interchange == 1"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-03 18:02:49.066827",
+ "modified": "2025-10-02 08:53:44.461234",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "CF Delivery Note",

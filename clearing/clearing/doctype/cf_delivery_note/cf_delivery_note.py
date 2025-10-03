@@ -35,14 +35,32 @@ class CFDeliveryNote(Document):
             )
 
     def on_update(self):
-        if self.has_container_interchange:
-            exists = frappe.db.exists("Container Interchange", {
-                "clearing_file": self.clearing_file,
-                "posting_date": self.posting_date
-            })
+        if not self.has_container_interchange:
+            return
 
-            if not exists:
-                container = frappe.new_doc("Container Interchange")
-                container.clearing_file = self.clearing_file
-                container.posting_date = self.posting_date or nowdate()
-                container.insert()
+        if not self.clearing_file:
+            return
+
+        filters = {
+            "clearing_file": self.clearing_file,
+            "posting_date": self.posting_date,
+        }
+
+        container_name = frappe.db.exists("Container Interchange", filters)
+
+        if not container_name:
+            container = frappe.new_doc("Container Interchange")
+            container.clearing_file = self.clearing_file
+            container.posting_date = self.posting_date or nowdate()
+            container.insert()
+            container_name = container.name
+
+        if container_name and self.container_interchange != container_name:
+            frappe.db.set_value(
+                "CF Delivery Note",
+                self.name,
+                "container_interchange",
+                container_name,
+                update_modified=False,
+            )
+            self.container_interchange = container_name

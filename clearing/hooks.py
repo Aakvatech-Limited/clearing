@@ -64,6 +64,7 @@ app_license = "MIT"
 # before_install = "clearing.install.before_install"
 after_install = [
     "clearing.patches.load_fixtures.execute",
+    "clearing.patches.load_custom_fields.execute",
 ]
 
 before_delete = [

@@ -39,6 +39,7 @@
   "column_break_nqelm",
   "cargo_location",
   "column_break_z7sfz",
+  "total_container_summary",
   "document_section_section",
   "attach_documents",
   "section_break_utsgq",
@@ -50,6 +51,7 @@
   "amended_from",
   "dashboard_tab",
   "connections_tab",
+  "section_break_vzrn",
   "tancis_lodging_date",
   "reference_no",
   "tansad_no",
@@ -72,7 +74,8 @@
    "in_standard_filter": 1,
    "label": "Consignee/ Customer",
    "options": "Customer",
-   "reqd": 1
+   "reqd": 1,
+   "width": "2"
   },
   {
    "fieldname": "customer_address",
@@ -146,8 +149,9 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Open\nPre-Lodged\nOn Process\nCleared\nBills Paid\nDelivered",
-   "read_only": 1
+   "options": "Draft\nOpen\nPre-Lodged\nOn Process\nCleared\nBills Paid\nDelivered",
+   "read_only": 1,
+   "width": "1"
   },
   {
    "fieldname": "additional_information_section",
@@ -187,6 +191,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Data",
@@ -358,24 +363,35 @@
    "label": "AWB/BL No"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "bond_returned",
    "fieldtype": "Check",
    "label": "Bond Returned"
   },
   {
+   "allow_on_submit": 1,
    "depends_on": "eval:doc.bond_returned == 1",
    "fieldname": "bond_release_date",
    "fieldtype": "Date",
    "label": "Bond Release Date",
    "mandatory_depends_on": "eval:doc.bond_returned == 1"
+  },
+  {
+   "fieldname": "section_break_vzrn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_container_summary",
+   "fieldtype": "Data",
+   "label": "Total Container Summary"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-27 08:55:16.505254",
+ "modified": "2025-10-01 13:39:42.557696",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",
@@ -392,6 +408,33 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Clearing Agent",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "TRA Clearing Agent",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

@@ -1,8 +1,43 @@
 // Copyright (c) 2024, Nelson Mpanju and contributors
 // For license information, please see license.txt
 
+const TANCIS_FIELDS = [
+  "tancis_lodging_date",
+  "reference_no",
+  "tansad_no",
+  "declaration_type",
+  "cl_plan",
+  "awbbl_no",
+];
+
+const HEADLINE_PRIORITY = {
+  red: 4,
+  orange: 3,
+  yellow: 2,
+  blue: 1,
+  green: 0,
+};
+
 frappe.ui.form.on("Clearing File", {
   refresh: function (frm) {
+    reset_headline_messages(frm);
+
+    // Check clearing documents status
+    check_clearing_documents_status(frm);
+
+    frm.__tancis_original = Object.fromEntries(
+      TANCIS_FIELDS.map((field) => [field, frm.doc[field] || null])
+    );
+    frm.__tancis_warning_shown = false;
+
+    TANCIS_FIELDS.forEach((field) => {
+      const hasValue = !!frm.doc[field];
+      const shouldLock = !frm.is_new() && hasValue;
+      frm.set_df_property(field, "read_only", shouldLock ? 1 : 0);
+    });
+
+    frm.trigger("update_total_container_summary");
+
     // Force refresh of submit button
     if (frm.doc.status === "Delivered") {
       frm.page
@@ -10,6 +45,52 @@ frappe.ui.form.on("Clearing File", {
           frm.save("Submit");
         })
         .show();
+    }
+
+    // Show transit bond alert for IM8 declaration type when status is Delivered or submitted
+    if (frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT" &&
+        (frm.doc.status === "Delivered" || frm.doc.docstatus === 1) &&
+        !frm.doc.bond_returned) {
+      frm.set_intro(
+        `<div style="padding:15px; background:#fff3cd; border:1px solid #ffeeba; border-radius:5px; color:#856404;">
+          <strong>Transit Bond Alert:</strong><br>
+          Transit Bond has not yet been returned for this IM8 TRANSIT AND TRANSHIPMENT declaration.
+        </div>`,
+        "yellow"
+      );
+    }
+
+    if (frm.doc.status === "Delivered" && frm.doc.name) {
+      frappe.call({
+        method:
+          "clearing.clearing.doctype.clearing_file.clearing_file.check_container_interchange_completion",
+        args: { clearing_file: frm.doc.name },
+        callback: function (r) {
+          const data = r.message || {};
+          const finalDone = !!data.final_done;
+          const refundDone = !!data.refund_done;
+
+          const pendingSteps = [];
+          if (!finalDone) {
+            pendingSteps.push(__("Final EIR"));
+          }
+          if (!refundDone) {
+            pendingSteps.push(__("Container Deposit Refund"));
+          }
+
+          if (pendingSteps.length) {
+            const message = __(
+              "Pending Container Interchange record: {0}",
+              [pendingSteps.join(", ")]
+            );
+            set_headline_message(frm, "container", message, "orange");
+          } else {
+            set_headline_message(frm, "container", null);
+          }
+        },
+      });
+    } else {
+      set_headline_message(frm, "container", null);
     }
     // Update the "Attach Documents" button to be primary
     const container = document.querySelector(
@@ -42,30 +123,34 @@ frappe.ui.form.on("Clearing File", {
             },
             callback: function (r) {
               if (r.message && r.message.length > 0) {
-                frm.page.btn_primary && frm.page.btn_primary.hide();
+                // Document exists, open it
                 frappe.set_route("Form", doctype, r.message[0].name);
 
                 if (frm.doc.status === "Pre-Lodged") {
                   frm.set_value("status", "On Process");
-                  frm.save_or_update();
+                  frm.save();
                 }
               } else {
-                // Create a new document if it doesn't exist
-                frappe.call({
-                  method: "frappe.client.insert",
-                  args: { doc: new_doc_data },
-                  callback: function (r) {
-                    if (!r.exc) {
-                      frm.page.btn_primary && frm.page.btn_primary.hide();
-                      frappe.msgprint(__(success_message));
-                      frappe.set_route("Form", doctype, r.message.name);
+                // Create a new unsaved document
+                let new_doc = frappe.model.get_new_doc(doctype);
 
-                      frm.set_value("status", "On Process");
-                      frm.page.btn_primary.hide();
-                      frm.save_or_update();
-                    }
-                  },
-                });
+                // Set the basic fields
+                Object.assign(new_doc, new_doc_data);
+
+                if (!new_doc.posting_date) {
+                  new_doc.posting_date = frappe.datetime.get_today();
+                }
+
+                // Open the new document form without saving
+                frappe.set_route("Form", doctype, new_doc.name);
+
+                // Update clearing file status
+                if (frm.doc.status === "Pre-Lodged") {
+                  frm.set_value("status", "On Process");
+                  frm.save();
+                }
+
+                frappe.msgprint(__(success_message + " Please fill in the required fields and save."));
               }
             },
           });
@@ -75,7 +160,6 @@ frappe.ui.form.on("Clearing File", {
       ); // Make the button primary
     }
 
-    // Only show buttons if status is 'Pre-Lodged'
     if (frm.doc.status === "Pre-Lodged" || frm.doc.status === "On Process") {
       // TRA Clearance
       handle_clearance_creation(
@@ -86,7 +170,7 @@ frappe.ui.form.on("Clearing File", {
           doctype: "TRA Clearance",
           clearing_file: frm.doc.name,
           customer: frm.doc.customer,
-          status: "Payment Pending",
+          status: "Payment Pending"
         },
         "TRA Clearance created successfully"
       );
@@ -101,7 +185,7 @@ frappe.ui.form.on("Clearing File", {
             doctype: "Shipping Line Clearance",
             clearing_file: frm.doc.name,
             customer: frm.doc.customer,
-            status: "Unpaid",
+            status: "Unpaid"
           },
           "Shipping Line Clearance created successfully"
         );
@@ -116,22 +200,29 @@ frappe.ui.form.on("Clearing File", {
           doctype: "Physical Verification",
           clearing_file: frm.doc.name,
           customer: frm.doc.customer,
-          status: "Payment Pending",
+          status: "Payment Pending"
         },
         "Physical Verification created successfully"
       );
 
       // Port Clearance
+      let port_clearance_data = {
+        doctype: "Port Clearance",
+        clearing_file: frm.doc.name,
+        customer: frm.doc.customer,
+        status: "Unpaid"
+      };
+
+      // Auto-check has_transit_bond for IM8 declaration type
+      if (frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+        port_clearance_data.has_transit_bond = 1;
+      }
+
       handle_clearance_creation(
         "Port Clearance",
         "Port Clearance",
         { clearing_file: frm.doc.name },
-        {
-          doctype: "Port Clearance",
-          clearing_file: frm.doc.name,
-          customer: frm.doc.customer,
-          status: "Unpaid",
-        },
+        port_clearance_data,
         "Port Clearance created successfully"
       );
     }
@@ -149,6 +240,38 @@ frappe.ui.form.on("Clearing File", {
     ].forEach((action) => {
       frm.change_custom_button_type(action, null, "primary");
     });
+  },
+
+  validate: function (frm) {
+    if (frm.__tancis_warning_shown) {
+      return;
+    }
+
+    const originalValues = frm.__tancis_original || {};
+    const newlyCaptured = TANCIS_FIELDS.filter((field) => {
+      const before = originalValues[field];
+      const current = frm.doc[field];
+      return !before && !!current;
+    });
+
+    if (!newlyCaptured.length) {
+      return;
+    }
+
+    frappe.validated = false;
+    frappe.warn(
+      __("Heads Up"),
+      __("You cannot change TANCIS details after it has been set."),
+      () => {
+        frm.__tancis_warning_shown = true;
+        frappe.validated = true;
+        frm.save();
+      },
+      () => {
+        frm.__tancis_warning_shown = false;
+      },
+      true
+    );
   },
 
   attach_documents: function (frm) {
@@ -200,8 +323,30 @@ frappe.ui.form.on("Clearing File", {
     frm.set_value("cargo_description", descriptions.join("\n"));
   },
 
+  update_total_container_summary: function (frm) {
+    const total = (frm.doc.cargo_details || []).reduce((sum, row) => {
+      const quantity = parseFloat(row.quantity_of_container) || 0;
+      return sum + quantity;
+    }, 0);
+
+    const totalText = String(total || 0);
+    if ((frm.doc.total_container_summary || "0") !== totalText) {
+      frm.set_value("total_container_summary", totalText);
+    }
+  },
+
+  cargo_details_add: function (frm) {
+    frm.trigger("update_total_container_summary");
+  },
+
+  cargo_details_remove: function (frm) {
+    frm.trigger("update_total_container_summary");
+    frm.trigger("update_cargo_description");
+  },
+
   after_save: function (frm) {
     frm.trigger("update_cargo_description");
+    frm.trigger("update_total_container_summary");
   },
 });
 
@@ -244,6 +389,11 @@ frappe.ui.form.on("Cargo", {
       !seal_number_df.hidden
     );
     frm.fields_dict.cargo_details.grid.refresh();
+    frm.trigger("update_total_container_summary");
+  },
+
+  quantity_of_container: function (frm) {
+    frm.trigger("update_total_container_summary");
   },
 });
 
@@ -387,6 +537,8 @@ function proceedWithAttachmentDialog(frm) {
           if (response && response.message) {
             frappe.msgprint(__("Clearing Document created successfully."));
             d.hide();
+            // Refresh the form to update document list and check transit status
+            frm.reload_doc();
           } else {
             console.error("Failed to create Clearing Document.");
             frappe.msgprint(
@@ -416,4 +568,172 @@ function proceedWithAttachmentDialog(frm) {
   };
 
   d.show();
+}
+
+// Handle declaration type change
+frappe.ui.form.on("Clearing File", {
+  declaration_type: function(frm) {
+    if (frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+      frappe.msgprint({
+        title: __("Transit Bond Notice"),
+        message: __("IM8 TRANSIT AND TRANSHIPMENT declaration type selected. Transit Bond will be automatically checked in related Port Clearance documents."),
+        indicator: "blue"
+      });
+    }
+  },
+
+  bond_returned: function(frm) {
+    // Clear any transit bond alerts when bond is marked as returned
+    if (frm.doc.bond_returned && frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+      frm.set_intro("");
+    }
+  },
+
+  mode_of_transport: function(frm) {
+    // Refresh clearing document status when mode of transport changes
+    check_clearing_documents_status(frm);
+  }
+});
+
+// Trigger document check when documents are added/removed
+frappe.ui.form.on("Clearing File Document", {
+  document_name: function(frm) {
+    check_clearing_documents_status(frm);
+  },
+
+  clearing_file_document_remove: function(frm) {
+    setTimeout(() => check_clearing_documents_status(frm), 100);
+  }
+});
+
+function get_required_clearing_documents_js(mode_of_transport) {
+  const base_required_docs = [
+    "Authorisation Letter",
+    "Commercial Invoice",
+    "Packing List",
+  ];
+
+  if (mode_of_transport === "Air") {
+    return [...base_required_docs, "Air Waybill (AWB)"];
+  }
+
+  if (mode_of_transport === "Sea") {
+    return [...base_required_docs, "Bill of Lading B/L"];
+  }
+
+  return [...base_required_docs, "Air Waybill (AWB)"];
+}
+
+function check_clearing_documents_status(frm) {
+  if (!frm || !frm.doc) {
+    return;
+  }
+
+  if (!frm.doc.mode_of_transport) {
+    set_headline_message(frm, "docs", null);
+    return;
+  }
+
+  const requiredDocs = get_required_clearing_documents_js(frm.doc.mode_of_transport);
+  const attachedDocs = (frm.doc.document || [])
+    .map((row) => row.document_name)
+    .filter(Boolean);
+
+  const missingDocs = requiredDocs.filter(
+    (doc) => !attachedDocs.includes(doc)
+  );
+
+  if (missingDocs.length) {
+    set_headline_message(
+      frm,
+      "docs",
+      __("Attach the following clearing documents to move this Clearing File to 'Open': {0}", [
+        missingDocs.join(", "),
+      ]),
+      "yellow"
+    );
+    frm.__all_docs_alert_shown = false;
+  } else {
+    set_headline_message(frm, "docs", null);
+    if (!frm.__all_docs_alert_shown) {
+      frappe.show_alert(
+        {
+          message: __("All required clearing documents are attached."),
+          indicator: "green",
+        },
+        5
+      );
+      frm.__all_docs_alert_shown = true;
+    }
+  }
+}
+
+function reset_headline_messages(frm) {
+  if (!frm) {
+    return;
+  }
+
+  frm.__headline_messages = {};
+
+  if (frm.dashboard) {
+    frm.dashboard.clear_headline();
+    frm.dashboard.clear_comment && frm.dashboard.clear_comment();
+  }
+}
+
+function set_headline_message(frm, key, message, indicator = "yellow") {
+  if (!frm) {
+    return;
+  }
+
+  if (!frm.__headline_messages) {
+    frm.__headline_messages = {};
+  }
+
+  if (message) {
+    let normalizedIndicator = "yellow";
+    if (typeof indicator === "string") {
+      normalizedIndicator = indicator.toLowerCase();
+    }
+
+    frm.__headline_messages[key] = {
+      message,
+      indicator: normalizedIndicator,
+    };
+  } else if (frm.__headline_messages[key]) {
+    delete frm.__headline_messages[key];
+  }
+
+  refresh_headline_messages(frm);
+}
+
+function refresh_headline_messages(frm) {
+  if (!frm || !frm.dashboard) {
+    return;
+  }
+
+  const entries = Object.values(frm.__headline_messages || {});
+
+  if (!entries.length) {
+    frm.dashboard.clear_headline();
+    frm.dashboard.clear_comment && frm.dashboard.clear_comment();
+    return;
+  }
+
+  const indicator = entries.reduce((current, entry) => {
+    const color = entry.indicator || "yellow";
+    if (!current) {
+      return color;
+    }
+
+    return (HEADLINE_PRIORITY[color] || 0) >= (HEADLINE_PRIORITY[current] || 0)
+      ? color
+      : current;
+  }, null);
+
+  const html = entries
+    .map((entry) => `<div>${entry.message}</div>`)
+    .join("");
+
+  frm.dashboard.set_headline_alert(html, indicator || "yellow");
 }

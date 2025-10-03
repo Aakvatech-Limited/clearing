@@ -11,8 +11,12 @@
   "consignee_name",
   "final",
   "eir_number_reference",
+  "eir_date",
   "column_break_vvjx",
-  "posting_date"
+  "posting_date",
+  "refund",
+  "refund_date",
+  "refund_amount"
  ],
  "fields": [
   {
@@ -49,12 +53,37 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "refund",
+   "fieldtype": "Check",
+   "label": "Container Deposit Refunded"
+  },
+  {
+   "depends_on": "eval:doc.final == 1",
+   "fieldname": "eir_date",
+   "fieldtype": "Date",
+   "label": "EIR Date",
+   "mandatory_depends_on": "eval:doc.final == 1"
+  },
+  {
+   "depends_on": "refund",
+   "fieldname": "refund_date",
+   "fieldtype": "Date",
+   "label": "Refund Date"
+  },
+  {
+   "depends_on": "refund",
+   "fieldname": "refund_amount",
+   "fieldtype": "Float",
+   "label": "Refund Amount"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-27 11:21:20.775605",
+ "modified": "2025-10-02 08:56:18.449846",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Container Interchange",

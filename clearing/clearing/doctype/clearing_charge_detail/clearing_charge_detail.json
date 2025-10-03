@@ -9,7 +9,8 @@
   "charge_type",
   "description",
   "currency",
-  "amount"
+  "amount",
+  "is_invoice"
  ],
  "fields": [
   {
@@ -36,18 +37,28 @@
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Amount"
+   "label": "Amount",
+   "mandatory_depends_on": "is_invoice",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_invoice",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Invoice"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-02 14:39:49.165282",
+ "modified": "2025-10-01 15:01:46.671387",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charge Detail",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

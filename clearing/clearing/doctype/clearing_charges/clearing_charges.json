@@ -18,16 +18,23 @@
   "charges",
   "section_break_0qrth",
   "column_break_wv5mn",
+  "transport_total",
+  "agency_fee",
+  "total_debit",
   "column_break_fp5jw",
   "tra_clearance_total",
   "port_clearance_total",
   "shipment_clearance_total",
   "physical_clearance_total",
-  "total_charges_sum",
+  "total",
   "column_break_1",
-  "invoice_number",
+  "reference_number",
+  "reference_date",
+  "invoice_status",
   "column_break_hqjie",
-  "generate_invoice"
+  "generate_invoice",
+  "total_clearing_charges",
+  "amended_from"
  ],
  "fields": [
   {
@@ -38,15 +45,7 @@
   {
    "fieldname": "column_break_1",
    "fieldtype": "Section Break",
-   "label": "Payment Details"
-  },
-  {
-   "fieldname": "invoice_number",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Invoice",
-   "options": "Sales Invoice",
-   "read_only": 1
+   "label": "Invoice and Debit Details"
   },
   {
    "fieldname": "consigee_details_section",
@@ -79,14 +78,6 @@
    "fieldtype": "Table",
    "label": "Charges",
    "options": "Clearing Charge Detail",
-   "reqd": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Payment Status",
-   "options": "Unpaid\nPartially Paid\nPaid",
    "reqd": 1
   },
   {
@@ -131,13 +122,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "total_charges_sum",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Total Charges"
-  },
-  {
    "fieldname": "section_break_ccym",
    "fieldtype": "Section Break"
   },
@@ -146,11 +130,80 @@
    "fieldtype": "Table",
    "label": "Disbursement",
    "options": "Consignee Disbursement"
+  },
+  {
+   "fieldname": "transport_total",
+   "fieldtype": "Currency",
+   "label": "Transport Total"
+  },
+  {
+   "fieldname": "agency_fee",
+   "fieldtype": "Currency",
+   "label": "Clearing Agency Fee Total"
+  },
+  {
+   "fieldname": "total_debit",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Total Sales Invoice Charges"
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reference number",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "reference_number.posting_date",
+   "fieldname": "reference_date",
+   "fieldtype": "Date",
+   "label": "Reference Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total Debit Note Charges"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "options": "Clearing Charges Raised\nPending Payment\nPartially Paid\nPaid\nOn Hold"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "reference_number",
+   "fieldname": "invoice_status",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Invoice Status"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Clearing Charges",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "total_clearing_charges",
+   "fieldtype": "Currency",
+   "label": "Total Clearing Charges"
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-08-02 12:38:37.141045",
+ "modified": "2025-10-03 07:33:53.692406",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",

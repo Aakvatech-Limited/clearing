@@ -203,7 +203,7 @@
    "label": "Attach Documents"
   },
   {
-   "default": "Today",
+   "default": "now",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
@@ -227,7 +227,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-12 13:07:23.238613",
+ "modified": "2025-10-03 09:59:40.901523",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",
@@ -244,6 +244,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

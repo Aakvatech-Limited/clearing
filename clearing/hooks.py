@@ -137,7 +137,13 @@ doc_events = {
     },
     "Port Clearance": {
         "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
-    }
+    },
+    "Sales Invoice": {
+        "on_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+        "on_cancel": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+        "on_update_after_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+        "on change": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+    },
 }
 
 # Scheduled Tasks

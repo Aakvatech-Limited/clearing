@@ -13,34 +13,6 @@ frappe.ui.form.on("TRA Clearance", {
             const clearing_file_status = r.message.status;
             const mode_of_transport = r.message.mode_of_transport;
 
-            // Port Clearance button
-            handle_clearance_creation(
-              "Port Clearance",
-              "Port Clearance",
-              { clearing_file: frm.doc.clearing_file },
-              {
-                doctype: "Port Clearance",
-                clearing_file: frm.doc.clearing_file,
-                customer: frm.doc.customer,
-                status: "Unpaid",
-              },
-              "Port Clearance created successfully"
-            );
-
-            // Physical Verification button
-            handle_clearance_creation(
-              "Physical Verification",
-              "Physical Verification",
-              { clearing_file: frm.doc.clearing_file },
-              {
-                doctype: "Physical Verification",
-                clearing_file: frm.doc.clearing_file,
-                customer: frm.doc.customer,
-                status: "Payment Pending",
-              },
-              "Physical Verification created successfully"
-            );
-
             // Add conditional buttons based on the Clearing File status
             if (
               mode_of_transport !== "Air" &&
@@ -60,6 +32,40 @@ frappe.ui.form.on("TRA Clearance", {
                 "Shipping Line Clearance created successfully"
               );
             }
+            // Port Clearance button
+            let port_clearance_data = {
+              doctype: "Port Clearance",
+              clearing_file: frm.doc.clearing_file,
+              customer: frm.doc.customer,
+              status: "Unpaid",
+            };
+
+            // Physical Verification button
+            handle_clearance_creation(
+              "Physical Verification",
+              "Physical Verification",
+              { clearing_file: frm.doc.clearing_file },
+              {
+                doctype: "Physical Verification",
+                clearing_file: frm.doc.clearing_file,
+                customer: frm.doc.customer,
+                status: "Payment Pending",
+              },
+              "Physical Verification created successfully"
+            );
+
+            // Auto-check has_transit_bond for IM8 declaration type
+            if (r.message.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+              port_clearance_data.has_transit_bond = 1;
+            }
+
+            handle_clearance_creation(
+              "Port Clearance",
+              "Port Clearance",
+              { clearing_file: frm.doc.clearing_file },
+              port_clearance_data,
+              "Port Clearance created successfully"
+            );
 
             // Refresh buttons display
             frm.refresh_fields();
@@ -99,27 +105,19 @@ frappe.ui.form.on("TRA Clearance", {
             },
             callback: function (r) {
               if (r.message && r.message.length > 0) {
+                // Document exists, open it
                 frappe.set_route("Form", doctype, r.message[0].name);
-
-                if (frm.doc.status === "Pre-Lodged") {
-                  frm.set_value("status", "On Process");
-                  frm.save_or_update();
-                }
               } else {
-                // Create a new document if it doesn't exist
-                frappe.call({
-                  method: "frappe.client.insert",
-                  args: { doc: new_doc_data },
-                  callback: function (r) {
-                    if (!r.exc) {
-                      frappe.msgprint(__(success_message));
-                      frappe.set_route("Form", doctype, r.message.name);
+                // Create a new unsaved document
+                let new_doc = frappe.model.get_new_doc(doctype);
 
-                      frm.set_value("status", "On Process");
-                      frm.save_or_update();
-                    }
-                  },
-                });
+                // Set the basic fields
+                Object.assign(new_doc, new_doc_data);
+
+                // Open the new document form without saving
+                frappe.set_route("Form", doctype, new_doc.name);
+
+                frappe.msgprint(__(success_message + " Please fill in the required fields and save."));
               }
             },
           });
@@ -131,6 +129,13 @@ frappe.ui.form.on("TRA Clearance", {
   },
 
   attach_documents: function (frm) {
+    if (frm.doc.__unsaved) {
+      frappe.msgprint(
+        __("Please save the document before attaching documents.")
+      );
+      return;
+    }
+
     // Create the dialog for document attachment
     let d = new frappe.ui.Dialog({
       title: "Attach Clearing Document",
@@ -274,7 +279,7 @@ frappe.ui.form.on("TRA Clearance", {
             if (response && response.message) {
               frappe.msgprint(__("Clearing Document created successfully."));
               d.hide();
-              frm.refresh();
+              frm.reload_doc();
             } else {
               console.error("Failed to create Clearing Document.");
               frappe.msgprint(

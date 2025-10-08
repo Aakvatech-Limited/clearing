@@ -1305,59 +1305,59 @@
   "clearing_document_attribute": [
    {
     "document_attribute": "Letter Number",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Issue Date",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Authorizing Authority",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Authorized Person/Entity",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Purpose of Authorization",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Scope of Authorization",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Validity Period",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    },
    {
     "document_attribute": "Reference Documents",
-    "parent": "Authorisation Letter",
+    "parent": "Authorization Letter",
     "parentfield": "clearing_document_attribute",
     "parenttype": "Clearing Document Type"
    }
   ],
   "docstatus": 0,
   "doctype": "Clearing Document Type",
-  "document_type": "Authorisation Letter",
+  "document_type": "Authorization Letter",
   "linked_document": "Clearing File",
   "modified": "2025-01-19 12:00:00.000000",
-  "name": "Authorisation Letter"
+  "name": "Authorization Letter"
  },
  {
   "clearing_document_attribute": [

@@ -112,7 +112,7 @@ class ClearingFile(Document):
 
     def get_required_clearing_documents(self):
         base_required_docs = [
-            "Authorisation Letter",
+            "Authorization Letter",
             "Commercial Invoice",
             "Packing List",
         ]

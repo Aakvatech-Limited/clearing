@@ -103,7 +103,6 @@ frappe.ui.form.on("Clearing File", {
       }
     }
 
-    // Helper function to create or redirect to documents
     function handle_clearance_creation(
       doctype,
       label,
@@ -114,46 +113,72 @@ frappe.ui.form.on("Clearing File", {
       frm.add_custom_button(
         __(label),
         function () {
-          frappe.call({
-            method: "frappe.client.get_list",
-            args: {
-              doctype: doctype,
-              filters: filters,
-              limit: 1,
-            },
-            callback: function (r) {
-              if (r.message && r.message.length > 0) {
-                // Document exists, open it
-                frappe.set_route("Form", doctype, r.message[0].name);
+          const proceed = () => {
+            frappe.call({
+              method: "frappe.client.get_list",
+              args: {
+                doctype: doctype,
+                filters: filters,
+                limit: 1,
+              },
+              callback: function (r) {
+                if (r.message && r.message.length > 0) {
+                  // Document exists, open it
+                  frappe.set_route("Form", doctype, r.message[0].name);
+                } else {
+                  // Create a new unsaved document
+                  let new_doc = frappe.model.get_new_doc(doctype);
 
-                if (frm.doc.status === "Pre-Lodged") {
-                  frm.set_value("status", "On Process");
-                  frm.save();
+                  // Set the basic fields
+                  Object.assign(new_doc, new_doc_data);
+
+                  if (!new_doc.posting_date) {
+                    new_doc.posting_date = frappe.datetime.get_today();
+                  }
+
+                  // Open the new document form without saving
+                  frappe.set_route("Form", doctype, new_doc.name);
+
+                  frappe.msgprint(__(success_message + " Please fill in the required fields and save."));
                 }
-              } else {
-                // Create a new unsaved document
-                let new_doc = frappe.model.get_new_doc(doctype);
+              },
+            });
+          };
 
-                // Set the basic fields
-                Object.assign(new_doc, new_doc_data);
+          // Show all buttons but enforce starting with TRA Clearance
+          const requires_tra_first = [
+            "Shipping Line Clearance",
+            "Physical Verification",
+            "Port Clearance",
+          ].includes(doctype);
 
-                if (!new_doc.posting_date) {
-                  new_doc.posting_date = frappe.datetime.get_today();
+          if (requires_tra_first) {
+            frappe.call({
+              method: "frappe.client.get_list",
+              args: {
+                doctype: "TRA Clearance",
+                filters: { clearing_file: frm.doc.name },
+                limit: 1,
+                fields: ["name"],
+              },
+              callback: function (r) {
+                const has_tra = r.message && r.message.length > 0;
+                if (!has_tra) {
+                  frappe.msgprint(
+                    __(
+                      "Please create a TRA Clearance for this Clearing File before proceeding to {0}.",
+                      [doctype]
+                    )
+                  );
+                  return;
                 }
-
-                // Open the new document form without saving
-                frappe.set_route("Form", doctype, new_doc.name);
-
-                // Update clearing file status
-                if (frm.doc.status === "Pre-Lodged") {
-                  frm.set_value("status", "On Process");
-                  frm.save();
-                }
-
-                frappe.msgprint(__(success_message + " Please fill in the required fields and save."));
-              }
-            },
-          });
+                proceed();
+              },
+              error: () => proceed(), // fallback to let server-side validation handle
+            });
+          } else {
+            proceed();
+          }
         },
         null,
         "primary"
@@ -170,12 +195,12 @@ frappe.ui.form.on("Clearing File", {
           doctype: "TRA Clearance",
           clearing_file: frm.doc.name,
           customer: frm.doc.customer,
-          status: "Payment Pending"
+          status: "Payment Pending",
         },
         "TRA Clearance created successfully"
       );
 
-      // Shipment Clearance
+      // Shipping Line Clearance (show regardless, server will enforce order)
       if (frm.doc.mode_of_transport !== "Air") {
         handle_clearance_creation(
           "Shipping Line Clearance",
@@ -185,7 +210,7 @@ frappe.ui.form.on("Clearing File", {
             doctype: "Shipping Line Clearance",
             clearing_file: frm.doc.name,
             customer: frm.doc.customer,
-            status: "Unpaid"
+            status: "Unpaid",
           },
           "Shipping Line Clearance created successfully"
         );
@@ -200,7 +225,7 @@ frappe.ui.form.on("Clearing File", {
           doctype: "Physical Verification",
           clearing_file: frm.doc.name,
           customer: frm.doc.customer,
-          status: "Payment Pending"
+          status: "Payment Pending",
         },
         "Physical Verification created successfully"
       );
@@ -210,7 +235,7 @@ frappe.ui.form.on("Clearing File", {
         doctype: "Port Clearance",
         clearing_file: frm.doc.name,
         customer: frm.doc.customer,
-        status: "Unpaid"
+        status: "Unpaid",
       };
 
       // Auto-check has_transit_bond for IM8 declaration type
@@ -608,7 +633,7 @@ frappe.ui.form.on("Clearing File Document", {
 
 function get_required_clearing_documents_js(mode_of_transport) {
   const base_required_docs = [
-    "Authorisation Letter",
+    "Authorization Letter",
     "Commercial Invoice",
     "Packing List",
   ];
@@ -626,6 +651,12 @@ function get_required_clearing_documents_js(mode_of_transport) {
 
 function check_clearing_documents_status(frm) {
   if (!frm || !frm.doc) {
+    return;
+  }
+
+  // Only show the attach-docs headline after the Clearing File is saved
+  if (frm.is_new && frm.is_new()) {
+    set_headline_message(frm, "docs", null);
     return;
   }
 
@@ -719,6 +750,9 @@ function refresh_headline_messages(frm) {
     frm.dashboard.clear_comment && frm.dashboard.clear_comment();
     return;
   }
+
+  frm.dashboard.clear_headline();
+  frm.dashboard.clear_comment && frm.dashboard.clear_comment();
 
   const indicator = entries.reduce((current, entry) => {
     const color = entry.indicator || "yellow";

@@ -26,3 +26,11 @@ class TRAClearance(Document):
         """Ensure payment status is marked as 'Payment Completed' before submission."""
         if self.status != "Payment Completed":
             frappe.throw(_("You cannot Complete TRA Clearance unless the Payment Completed."))
+
+    def on_update(self):
+        """After saving TRA Clearance, move Clearing File to 'On Process' if it is 'Pre-Lodged'."""
+        if not self.clearing_file:
+            return
+        cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
+        if cf_status == "Pre-Lodged":
+            frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")

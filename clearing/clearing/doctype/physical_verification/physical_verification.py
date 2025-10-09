@@ -7,6 +7,16 @@ from frappe import _
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
 
 class PhysicalVerification(Document):
+    def validate(self):
+        # Enforce process order: require TRA Clearance first
+        if self.clearing_file and not frappe.db.exists(
+            "TRA Clearance", {"clearing_file": self.clearing_file}
+        ):
+            frappe.throw(
+                _(
+                    "Create a TRA Clearance for this Clearing File before proceeding to Physical Verification."
+                )
+            )
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
         if self.invoice_paid:
@@ -39,3 +49,44 @@ class PhysicalVerification(Document):
 
         if self.verification_status != "Completed":
             frappe.throw(_("You cannot complete Physical Verification unless the verification status is 'Completed'."))
+
+    def before_update_after_submit(self):
+        """Keep verification_location synced from Clearing File when submitted.
+
+        - Always refresh `verification_location` from linked Clearing File's `cargo_location`.
+        - Permit update-after-submit only when the change is limited to this field.
+        """
+        # Sync from source if available
+        if self.clearing_file:
+            cargo_loc = frappe.db.get_value("Clearing File", self.clearing_file, "cargo_location")
+            if cargo_loc is not None:
+                self.verification_location = cargo_loc
+
+        # Only allow this field to change after submit
+        allowed_fields = {"verification_location"}
+
+        changed = []
+        before = self.get_doc_before_save()
+        if before:
+            for df in self.meta.get("fields"):
+                fn = getattr(df, "fieldname", None)
+                if not fn:
+                    continue
+                # compare current vs previous
+                if self.has_value_changed(fn):
+                    changed.append(fn)
+
+        if changed and set(changed).issubset(allowed_fields):
+            self.flags.ignore_validate_update_after_submit = True
+
+    def on_update_after_submit(self):
+        # Placeholder for any post-save actions if needed later
+        pass
+
+    def on_update(self):
+        """After saving Physical Verification, move Clearing File to 'On Process' if it is 'Pre-Lodged'."""
+        if not self.clearing_file:
+            return
+        cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
+        if cf_status == "Pre-Lodged":
+            frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")

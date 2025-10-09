@@ -13,6 +13,14 @@ frappe.ui.form.on("Physical Verification", {
         },
         callback: function (r) {
           if (r.message) {
+            // Keep verification_location in sync on submitted docs (no set_value)
+            if (frm.doc.docstatus === 1) {
+              const v = r.message.cargo_location;
+              if (v && v !== frm.doc.verification_location) {
+                frm.doc.verification_location = v;
+                frm.refresh_field('verification_location');
+              }
+            }
             const clearing_file_status = r.message.status;
             const mode_of_transport = r.message.mode_of_transport;
 
@@ -119,6 +127,26 @@ frappe.ui.form.on("Physical Verification", {
         "primary"
       ); // Make the button primary
     }
+  },
+  onload(frm) {
+    // Live sync when linked Clearing File is saved (no page reload)
+    if (frm._ver_loc_listener) return;
+    frm._ver_loc_listener = true;
+    frappe.realtime.on('doc_update', (d) => {
+      if (
+        d.doctype === 'Clearing File' &&
+        d.docname === frm.doc.clearing_file &&
+        frm.doc.docstatus === 1
+      ) {
+        frappe.db.get_value('Clearing File', d.docname, 'cargo_location').then(r => {
+          const v = r.message && r.message.cargo_location;
+          if (v && v !== frm.doc.verification_location) {
+            frm.doc.verification_location = v;
+            frm.refresh_field('verification_location');
+          }
+        });
+      }
+    });
   },
 
   attach_documents: function (frm) {

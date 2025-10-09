@@ -19,6 +19,9 @@
   "column_break_ccdqe",
   "inspection_date",
   "verification_location",
+  "wharfage_invoice_section",
+  "issue_date",
+  "paid_date",
   "total_charges_section",
   "total_charges",
   "column_break_ktifs",
@@ -126,7 +129,9 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "clearing_file.cargo_location",
+   "fetch_if_empty": 1,
    "fieldname": "verification_location",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -203,7 +208,7 @@
    "label": "Attach Documents"
   },
   {
-   "default": "now",
+   "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
@@ -222,12 +227,27 @@
    "fieldtype": "Table",
    "options": "Physical Verification Document",
    "read_only": 1
+  },
+  {
+   "fieldname": "wharfage_invoice_section",
+   "fieldtype": "Section Break",
+   "label": "Wharfage Invoice"
+  },
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "fieldname": "paid_date",
+   "fieldtype": "Date",
+   "label": "Paid Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-03 09:59:40.901523",
+ "modified": "2025-10-08 14:23:29.452397",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

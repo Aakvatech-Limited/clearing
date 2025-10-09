@@ -15,6 +15,7 @@
   "drop_off_date",
   "container_deposit_amount",
   "container_deposit_date",
+  "etb",
   "column_break_a2owv",
   "posting_date",
   "status",
@@ -70,7 +71,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "now",
+   "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
@@ -160,6 +161,7 @@
    "label": "Invoice Received"
   },
   {
+   "depends_on": "container_deposit_date",
    "fieldname": "container_deposit_amount",
    "fieldtype": "Currency",
    "label": "Container Deposit Amount"
@@ -173,12 +175,17 @@
    "fieldname": "container_deposit_date",
    "fieldtype": "Date",
    "label": "Container Deposit Date"
+  },
+  {
+   "fieldname": "etb",
+   "fieldtype": "Date",
+   "label": "ETB"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 08:04:32.796764",
+ "modified": "2025-10-08 14:21:19.426695",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

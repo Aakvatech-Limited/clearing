@@ -14,6 +14,7 @@
   "valid_from",
   "valid_to",
   "column_break_dfl0o",
+  "posting_date",
   "consignee",
   "status",
   "consignee_address",
@@ -151,6 +152,7 @@
    "label": "Charges Paid"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "cf_delivery_note",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -177,12 +179,18 @@
    "fieldtype": "Date",
    "label": "Valid To",
    "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-27 09:58:58.808812",
+ "modified": "2025-10-07 14:20:21.595014",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

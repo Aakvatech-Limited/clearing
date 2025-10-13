@@ -20,6 +20,8 @@ def get_data():
             "Port Clearance": "clearing_file",
             "Clearing Document": "clearing_file",
             "Clearing Charges": "clearing_file",
+            "CF Delivery Note": "clearing_file",
+            "Container Interchange": "clearing_file"
         },
         "transactions": [
             {
@@ -33,6 +35,14 @@ def get_data():
             {
                 "label": _("Finance"),
                 "items": ["Clearing Charges"]
+            },
+            {
+                "label": _("Delivery Note"),
+                "items": ["CF Delivery Note"]
+            },
+            {
+                "label": _("Container Interchange"),
+                "items": ["Container Interchange"]
             }
         ]
     }

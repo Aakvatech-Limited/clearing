@@ -9,6 +9,44 @@ from frappe.utils import nowdate
 
 class CFDeliveryNote(Document):
 
+    def validate(self):
+        """Auto-check `has_container_interchange` if any cargo package type
+        on the linked Clearing File has `has_container_interchange` enabled.
+        """
+        try:
+            if not self.clearing_file:
+                return
+
+            # Fetch package types from the Clearing File's cargo rows
+            cargo_rows = frappe.get_all(
+                "Cargo",
+                filters={
+                    "parenttype": "Clearing File",
+                    "parent": self.clearing_file,
+                },
+                fields=["package_type"],
+            )
+
+            package_types = [row.get("package_type") for row in cargo_rows if row.get("package_type")]
+            if not package_types:
+                return
+
+            # Check if any of the package types is flagged to require container interchange
+            flagged = frappe.get_all(
+                "Package Type",
+                filters={
+                    "name": ["in", package_types],
+                    "has_container_interchange": 1,
+                },
+                limit=1,
+            )
+
+            if flagged:
+                self.has_container_interchange = 1
+        except Exception:
+            # Don't block save due to any lookup error; log for visibility
+            frappe.log_error(frappe.get_traceback(), "CF Delivery Note: set has_container_interchange from Package Type failed")
+
     def before_submit(self):
         # Check if the Delivery Note has a linked Clearing File
         if not self.clearing_file:

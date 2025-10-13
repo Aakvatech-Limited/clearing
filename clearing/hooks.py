@@ -67,6 +67,11 @@ after_install = [
     "clearing.patches.load_custom_fields.execute",
 ]
 
+after_migrate = [
+    "clearing.patches.load_fixtures.execute",
+    "clearing.patches.load_custom_fields.execute",
+]
+
 before_delete = [
     "clearing.clearing.utils.allow_deletion_with_confirmation"
 ]

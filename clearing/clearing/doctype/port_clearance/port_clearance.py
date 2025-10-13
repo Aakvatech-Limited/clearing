@@ -6,6 +6,16 @@ from frappe import _
 from frappe.model.document import Document
 
 class PortClearance(Document):
+    def validate(self):
+        # Enforce process order: require TRA Clearance first
+        if self.clearing_file and not frappe.db.exists(
+            "TRA Clearance", {"clearing_file": self.clearing_file}
+        ):
+            frappe.throw(
+                _(
+                    "Create a TRA Clearance for this Clearing File before proceeding to Port Clearance."
+                )
+            )
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
         if self.invoice_paid:
@@ -25,6 +35,14 @@ class PortClearance(Document):
 
         # Check if all required documents are attached
         ensure_all_documents_attached(self, "port_clearance_document")
+
+    def on_update(self):
+        """After saving Port Clearance, move Clearing File to 'On Process' if it is 'Pre-Lodged'."""
+        if not self.clearing_file:
+            return
+        cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
+        if cf_status == "Pre-Lodged":
+            frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")
 
 def ensure_all_documents_attached(self, type):
     """Ensure all required documents for the current mode of transport are attached."""
@@ -55,3 +73,5 @@ def ensure_all_documents_attached(self, type):
             _('The following required documents are missing and must be attached before submission: {0}')
             .format(missing_docs_str), frappe.ValidationError
         )
+
+    

@@ -15,6 +15,17 @@ class ShippingLineClearance(Document):
                 title=_("Invalid Mode of Transport")
             )
 
+        # Enforce process order: require TRA Clearance to exist first
+        if self.clearing_file and not frappe.db.exists(
+            "TRA Clearance", {"clearing_file": self.clearing_file}
+        ):
+            frappe.throw(
+                _(
+                    "Create a TRA Clearance for this Clearing File before proceeding to Shipping Line Clearance."
+                ),
+                title=_("Order Enforcement")
+            )
+
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
         if self.invoice_paid:
@@ -46,3 +57,11 @@ class ShippingLineClearance(Document):
             if row.document_name == "Delivery Order":
                 if not self.delivery_order_expire_date:
                     frappe.throw(_("Please set the Delivery Order Expire Date before saving."))
+
+    def on_update(self):
+        """After saving Shipping Line Clearance, move Clearing File to 'On Process' if it is 'Pre-Lodged'."""
+        if not self.clearing_file:
+            return
+        cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
+        if cf_status == "Pre-Lodged":
+            frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")

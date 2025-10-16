@@ -27,7 +27,13 @@ app_license = "MIT"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    # Load custom client script for Journal Entry (adds Payment Entry button)
+    # Path is relative to python module root (apps/clearing/clearing)
+    # so this resolves to apps/clearing/clearing/clearing/journal_entry.js
+    "Journal Entry": "clearing/journal_entry.js",
+    "Payment Entry": "clearing/payment_entry.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -133,22 +139,46 @@ validate = [
 
 doc_events = {
     "TRA Clearance": {
-        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+        "on_submit": [
+            "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared",
+            "clearing.api.journal_entry.create_or_update_journal_entry_for_clearance"
+        ],
+        "on_cancel": "clearing.api.journal_entry.cancel_journal_entry_on_clearance_cancel"
     },
     "Shipping Line Clearance": {
-        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+        "on_submit": [
+            "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared",
+            "clearing.api.journal_entry.create_or_update_journal_entry_for_clearance"
+        ],
+        "on_cancel": "clearing.api.journal_entry.cancel_journal_entry_on_clearance_cancel"
     },
     "Physical Verification": {
-        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+        "on_submit": [
+            "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared",
+            "clearing.api.journal_entry.create_or_update_journal_entry_for_clearance"
+        ],
+        "on_cancel": "clearing.api.journal_entry.cancel_journal_entry_on_clearance_cancel"
     },
     "Port Clearance": {
-        "on_submit": "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared"
+        "on_submit": [
+            "clearing.clearing.doctype.clearing_file.clearing_file.update_status_to_cleared",
+            "clearing.api.journal_entry.create_or_update_journal_entry_for_clearance"
+        ],
+        "on_cancel": "clearing.api.journal_entry.cancel_journal_entry_on_clearance_cancel"
     },
     "Sales Invoice": {
         "on_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
         "on_cancel": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
         "on_update_after_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
-        "on change": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+        "on_update": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_invoice_status_change",
+    },
+    # Keep Clearing Charges in sync when payments are posted or reversed
+    "Payment Entry": {
+        "onload": "clearing.clearing.doctype.clearing_charges.clearing_charges.clamp_payment_entry_references",
+        "validate": "clearing.clearing.doctype.clearing_charges.clearing_charges.clamp_payment_entry_references",
+        "on_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_payment_entry_status_change",
+        "on_cancel": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_payment_entry_status_change",
+        "on_update_after_submit": "clearing.clearing.doctype.clearing_charges.clearing_charges.handle_payment_entry_status_change",
     },
 }
 

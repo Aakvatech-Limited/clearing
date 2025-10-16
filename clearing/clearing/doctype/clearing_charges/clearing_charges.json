@@ -12,8 +12,6 @@
   "column_break_ahtow",
   "status",
   "consigee",
-  "section_break_ccym",
-  "disbursement",
   "service_charge_details_section",
   "charges",
   "section_break_0qrth",
@@ -27,13 +25,19 @@
   "shipment_clearance_total",
   "physical_clearance_total",
   "total",
+  "section_break_inpr",
+  "disbursement",
+  "section_break_ccym",
+  "make_payment",
+  "reimbursement",
+  "total_paid_amount",
+  "total_outstanding_amount",
   "column_break_1",
-  "reference_number",
-  "reference_date",
-  "invoice_status",
-  "column_break_hqjie",
+  "clearing_services",
   "generate_invoice",
+  "column_break_hqjie",
   "total_clearing_charges",
+  "balance",
   "amended_from"
  ],
  "fields": [
@@ -45,7 +49,7 @@
   {
    "fieldname": "column_break_1",
    "fieldtype": "Section Break",
-   "label": "Invoice and Debit Details"
+   "label": "Receivable"
   },
   {
    "fieldname": "consigee_details_section",
@@ -69,7 +73,7 @@
    "fieldname": "consigee",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Consigee",
+   "label": "Consignee",
    "options": "Customer",
    "read_only": 1
   },
@@ -92,21 +96,25 @@
   {
    "fieldname": "tra_clearance_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "TRA Clearance Total"
   },
   {
    "fieldname": "port_clearance_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Port Clearance Total"
   },
   {
    "fieldname": "shipment_clearance_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Shipment Clearance Total"
   },
   {
    "fieldname": "physical_clearance_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Physical Verification Total"
   },
   {
@@ -123,22 +131,19 @@
   },
   {
    "fieldname": "section_break_ccym",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "disbursement",
-   "fieldtype": "Table",
-   "label": "Disbursement",
-   "options": "Consignee Disbursement"
+   "fieldtype": "Section Break",
+   "label": "Reimbursement from consignee"
   },
   {
    "fieldname": "transport_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Transport Total"
   },
   {
    "fieldname": "agency_fee",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Clearing Agency Fee Total"
   },
   {
@@ -147,21 +152,6 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Total Sales Invoice Charges"
-  },
-  {
-   "fieldname": "reference_number",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Reference number",
-   "options": "Sales Invoice",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "reference_number.posting_date",
-   "fieldname": "reference_date",
-   "fieldtype": "Date",
-   "label": "Reference Date",
-   "read_only": 1
   },
   {
    "fieldname": "total",
@@ -174,15 +164,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Payment Status",
-   "options": "Clearing Charges Raised\nPending Payment\nPartially Paid\nPaid\nOn Hold"
-  },
-  {
-   "allow_on_submit": 1,
-   "depends_on": "reference_number",
-   "fieldname": "invoice_status",
-   "fieldtype": "Data",
-   "ignore_user_permissions": 1,
-   "label": "Invoice Status"
+   "options": "Draft\nPending Payment\nPartially Paid\nPaid"
   },
   {
    "fieldname": "amended_from",
@@ -198,12 +180,55 @@
    "fieldname": "total_clearing_charges",
    "fieldtype": "Currency",
    "label": "Total Clearing Charges"
+  },
+  {
+   "fieldname": "reimbursement",
+   "fieldtype": "Table",
+   "label": "Reimbursement",
+   "options": "Consignee Reimbursement"
+  },
+  {
+   "fieldname": "section_break_inpr",
+   "fieldtype": "Section Break",
+   "label": "Paid By Clearing Agent"
+  },
+  {
+   "fieldname": "disbursement",
+   "fieldtype": "Table",
+   "label": "Disbursement",
+   "options": "Consignee Disbursement"
+  },
+  {
+   "fieldname": "make_payment",
+   "fieldtype": "Button",
+   "label": "Receive Payment"
+  },
+  {
+   "fieldname": "total_paid_amount",
+   "fieldtype": "Currency",
+   "label": "Total Reimbursements"
+  },
+  {
+   "fieldname": "total_outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding Reimbursement"
+  },
+  {
+   "fieldname": "clearing_services",
+   "fieldtype": "Table",
+   "label": "Clearing Services",
+   "options": "Clearing Services"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Balance"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-03 07:33:53.692406",
+ "modified": "2025-10-16 07:39:06.906502",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",

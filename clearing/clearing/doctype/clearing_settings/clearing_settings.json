@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "creation": "2025-10-09 12:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "journal_entry_settings_section",
+  "column_break_1",
+  "cash_or_bank_group_account",
+  "clearing_receivable_account"
+ ],
+ "fields": [
+  {
+   "fieldname": "journal_entry_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Journal Entry Settings"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "All clearance charges will credit this single cash or bank account",
+   "fieldname": "cash_or_bank_group_account",
+   "fieldtype": "Table MultiSelect",
+   "label": "Cash Or Bank Account",
+   "options": "Clearing Asset Account Group"
+  },
+  {
+   "description": "All clearance charges will debit this single party account.",
+   "fieldname": "clearing_receivable_account",
+   "fieldtype": "Link",
+   "label": "Receivable Account",
+   "options": "Account"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-10-11 17:46:31.460694",
+ "modified_by": "Administrator",
+ "module": "Clearing",
+ "name": "Clearing Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

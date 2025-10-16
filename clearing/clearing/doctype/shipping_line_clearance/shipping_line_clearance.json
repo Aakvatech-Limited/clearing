@@ -26,6 +26,7 @@
   "total_charges",
   "column_break_r0s5o",
   "paid_by_clearing_agent",
+  "paid_from",
   "invoice_paid",
   "section_break_keyml",
   "attach_documents",
@@ -97,6 +98,13 @@
    "fieldname": "paid_by_clearing_agent",
    "fieldtype": "Check",
    "label": "Paid By Clearing Agent"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "paid_from",
+   "fieldtype": "Date",
+   "label": "Disbursement Date",
+   "read_only": 1
   },
   {
    "fieldname": "attach_documents",
@@ -185,7 +193,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-08 14:21:19.426695",
+ "modified": "2025-10-15 14:13:28.495609",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

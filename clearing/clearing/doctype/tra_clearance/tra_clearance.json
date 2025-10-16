@@ -18,6 +18,7 @@
   "total_charges",
   "column_break_7tyvu",
   "paid_by_clearing_agent",
+  "paid_from",
   "invoice_paid",
   "assessment_document_section",
   "issue_date",
@@ -112,6 +113,13 @@
    "label": "Paid By Clearing Agent"
   },
   {
+   "allow_on_submit": 1,
+   "fieldname": "paid_from",
+   "fieldtype": "Date",
+   "label": "Disbursement Date",
+   "read_only": 1
+  },
+  {
    "fieldname": "attach_documents",
    "fieldtype": "Button",
    "label": "Attach Documents"
@@ -178,7 +186,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 10:45:40.029341",
+ "modified": "2025-10-15 14:13:43.453845",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

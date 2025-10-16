@@ -17,9 +17,10 @@ class ClearingFile(Document):
         self.enforce_tancis_fields_immutable()
 
     def before_submit(self):
-        if self.status != "Delivered":
+        # Allow submission when Delivered or Payment Received as per revised flow
+        if self.status not in ("Delivered", "Payment Received"):
             frappe.throw(
-                _("Cannot submit Clearing File unless status is 'Delivered'."),
+                _("Cannot submit Clearing File unless status is 'Delivered' or 'Payment Received'."),
                 title=_("Invalid Status"),
             )
         # On submit, enforce that all required documents are attached
@@ -36,6 +37,14 @@ class ClearingFile(Document):
         # Check for unreturned transit bonds when status changes to Delivered
         if self.status == "Delivered":
             self.check_transit_bond_status()
+
+    def on_submit(self):
+        # Upon submission, mark as Closed
+        try:
+            frappe.db.set_value(self.doctype, self.name, "status", "Closed")
+            self.status = "Closed"
+        except Exception:
+            pass
 
     def check_and_update_status(self):
         # First check for transit documents to set status to "Open"

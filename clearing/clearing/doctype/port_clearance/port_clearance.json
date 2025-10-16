@@ -11,8 +11,8 @@
   "clearing_file",
   "cf_delivery_note",
   "has_transit_bond",
-  "valid_from",
-  "valid_to",
+  "key_reference",
+  "date",
   "column_break_dfl0o",
   "posting_date",
   "consignee",
@@ -26,6 +26,7 @@
   "total_charges",
   "column_break_ayxk7",
   "paid_by_clearing_agent",
+  "paid_from",
   "invoice_paid",
   "document_section_section",
   "attach_documents",
@@ -105,6 +106,13 @@
    "label": "Paid By Clearing Agent"
   },
   {
+   "allow_on_submit": 1,
+   "fieldname": "paid_from",
+   "fieldtype": "Date",
+   "label": "Disbursement Date",
+   "read_only": 1
+  },
+  {
    "bold": 1,
    "fieldname": "status",
    "fieldtype": "Select",
@@ -167,30 +175,28 @@
    "label": "Has Transit Bond"
   },
   {
-   "depends_on": "eval:doc.has_transit_bond == 1",
-   "fieldname": "valid_from",
-   "fieldtype": "Date",
-   "label": "Valid From",
-   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
-  },
-  {
-   "depends_on": "eval:doc.has_transit_bond == 1",
-   "fieldname": "valid_to",
-   "fieldtype": "Date",
-   "label": "Valid To",
-   "mandatory_depends_on": "eval:doc.has_transit_bond == 1"
-  },
-  {
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "depends_on": "has_transit_bond",
+   "fieldname": "key_reference",
+   "fieldtype": "Data",
+   "label": "Key Reference"
+  },
+  {
+   "depends_on": "has_transit_bond",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-07 14:20:21.595014",
+ "modified": "2025-10-15 14:12:09.322499",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

@@ -6,10 +6,13 @@ import frappe
 from frappe.model.document import Document, _
 
 class ClearingDocument(Document):
-    def before_save(self):
-        self.populate_document_in_parent()
+    def after_insert(self):
+        self.populate_document_in_parent(is_new=True)
 
-    def populate_document_in_parent(self):
+    def on_update(self):
+        self.populate_document_in_parent(is_new=False)
+
+    def populate_document_in_parent(self, is_new: bool = False):
         parent_doctype_map = {
             "Clearing File": {
                 "doctype": "Clearing File",
@@ -66,7 +69,7 @@ class ClearingDocument(Document):
         # Match by document_name only (not clearing_document_id since self.name may not exist yet)
         existing_entry = None
         for entry in parent_doc.get(parent_config['child_table']):
-            if entry.document_name == self.document_type:
+            if entry.clearing_document_id == self.name or entry.document_name == self.document_type:
                 existing_entry = entry
                 break
 
@@ -85,8 +88,7 @@ class ClearingDocument(Document):
                 "document_received": self.get("document_received", 1),
                 "clearing_document_id": self.name,
                 "submission_date": self.get("submission_date", frappe.utils.now_datetime()),
-                "document_attributes": document_attributes,
-                "parent": self.clearing_file  # Ensure it's linked to the correct clearing file
+                "document_attributes": document_attributes
             }
             parent_doc.append(parent_config['child_table'], document_entry)
             frappe.msgprint(f"Document {self.document_type} appended to {parent_config['doctype']}.")

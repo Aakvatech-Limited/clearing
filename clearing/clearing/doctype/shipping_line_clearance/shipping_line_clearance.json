@@ -118,16 +118,9 @@
   {
    "fieldname": "staff_id",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Staff ID",
    "options": "Employee"
-  },
-  {
-   "fetch_from": "staff_id.employee_name",
-   "fieldname": "staff_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Staff Name",
-   "read_only": 1
   },
   {
    "fieldname": "delivery_order_expire_date",
@@ -188,12 +181,20 @@
    "fieldname": "etb",
    "fieldtype": "Date",
    "label": "ETB"
+  },
+  {
+   "depends_on": "staff_id",
+   "fetch_from": "staff_id.employee_name",
+   "fieldname": "staff_name",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Staff Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-15 14:13:28.495609",
+ "modified": "2025-10-23 08:07:42.519150",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

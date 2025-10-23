@@ -17,12 +17,18 @@ class ClearingFile(Document):
         self.enforce_tancis_fields_immutable()
 
     def before_submit(self):
-        # Allow submission when Delivered or Payment Received as per revised flow
-        if self.status not in ("Delivered", "Payment Received"):
+        if self.status == "Delivered" and not self._has_clearing_charges():
             frappe.throw(
-                _("Cannot submit Clearing File unless status is 'Delivered' or 'Payment Received'."),
+                _("Create Clearing Charges for this file before submitting."),
+                title=_("Clearing Charges Required"),
+            )
+        # Allow submission only when payment has been received
+        if self.status != "Payment Received":
+            frappe.throw(
+                _("Cannot submit Clearing File unless status is Payment Received."),
                 title=_("Invalid Status"),
             )
+        self._validate_container_interchange_submission()
         # On submit, enforce that all required documents are attached
         ensure_all_documents_attached(self, "clearing_file_document")
         self.check_and_validate_clearing_charges()
@@ -117,7 +123,6 @@ class ClearingFile(Document):
                 "Status updated from %s to Open for Clearing File %s"
                 % (old_status, self.name)
             )
-
 
     def get_required_clearing_documents(self):
         base_required_docs = [
@@ -220,6 +225,35 @@ class ClearingFile(Document):
             frappe.throw(
                 _("You cannot change this field after it has been set."),
                 title=label,
+            )
+
+    def _has_clearing_charges(self) -> bool:
+        if self.is_new() or not self.name:
+            return False
+        return bool(
+            frappe.db.exists(
+                "Clearing Charges",
+                {"clearing_file": self.name, "docstatus": ["<", 2]},
+            )
+        )
+
+    def _validate_container_interchange_submission(self):
+        if self.is_new() or not self.name:
+            return
+        info = check_container_interchange_completion(self.name)
+        final_done = bool(info.get("final_done"))
+        refund_done = bool(info.get("refund_done"))
+        pending_steps = []
+        if not final_done:
+            pending_steps.append(_("Final EIR"))
+        if not refund_done:
+            pending_steps.append(_("Container Deposit Refund"))
+        if pending_steps:
+            frappe.throw(
+                _("Complete Container Interchange steps before submitting: {0}").format(
+                    ", ".join(pending_steps)
+                ),
+                title=_("Container Interchange Incomplete"),
             )
 
     def check_and_validate_clearing_charges(self):

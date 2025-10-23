@@ -25,18 +25,25 @@
   "shipment_clearance_total",
   "physical_clearance_total",
   "total",
+  "section_break_pryv",
+  "generate_invoice",
+  "clearing_services",
+  "section_break_oyrg",
+  "total_sales_invoice",
+  "column_break_lirf",
+  "outstanding_amount",
   "section_break_inpr",
-  "disbursement",
   "section_break_ccym",
   "make_payment",
   "reimbursement",
+  "section_break_nqap",
   "total_paid_amount",
+  "column_break_xcki",
   "total_outstanding_amount",
   "column_break_1",
-  "clearing_services",
-  "generate_invoice",
-  "column_break_hqjie",
+  "column_break_hwmm",
   "total_clearing_charges",
+  "column_break_hqjie",
   "balance",
   "amended_from"
  ],
@@ -119,7 +126,8 @@
   },
   {
    "fieldname": "section_break_0qrth",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Total Charge Details"
   },
   {
    "fieldname": "column_break_wv5mn",
@@ -151,7 +159,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Total Sales Invoice Charges"
+   "label": "Total Invoice Charges"
   },
   {
    "fieldname": "total",
@@ -162,6 +170,7 @@
    "allow_on_submit": 1,
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Payment Status",
    "options": "Draft\nPending Payment\nPartially Paid\nPaid"
@@ -193,12 +202,6 @@
    "label": "Paid By Clearing Agent"
   },
   {
-   "fieldname": "disbursement",
-   "fieldtype": "Table",
-   "label": "Disbursement",
-   "options": "Consignee Disbursement"
-  },
-  {
    "fieldname": "make_payment",
    "fieldtype": "Button",
    "label": "Receive Payment"
@@ -206,7 +209,7 @@
   {
    "fieldname": "total_paid_amount",
    "fieldtype": "Currency",
-   "label": "Total Reimbursements"
+   "label": "Total Reimbursed"
   },
   {
    "fieldname": "total_outstanding_amount",
@@ -216,19 +219,56 @@
   {
    "fieldname": "clearing_services",
    "fieldtype": "Table",
-   "label": "Clearing Services",
+   "label": "Service Invoice",
    "options": "Clearing Services"
   },
   {
    "fieldname": "balance",
    "fieldtype": "Currency",
    "label": "Balance"
+  },
+  {
+   "fieldname": "section_break_pryv",
+   "fieldtype": "Section Break",
+   "label": "Clearing Services"
+  },
+  {
+   "fieldname": "column_break_hwmm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_sales_invoice",
+   "fieldtype": "Currency",
+   "label": "Total Sales Invoice"
+  },
+  {
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Total Outstanding Amount"
+  },
+  {
+   "fieldname": "section_break_oyrg",
+   "fieldtype": "Section Break",
+   "label": "Total Clearing Services"
+  },
+  {
+   "fieldname": "column_break_lirf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_nqap",
+   "fieldtype": "Section Break",
+   "label": "Total Reimbursements"
+  },
+  {
+   "fieldname": "column_break_xcki",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-16 07:39:06.906502",
+ "modified": "2025-10-22 15:02:36.782517",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",
@@ -251,5 +291,6 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

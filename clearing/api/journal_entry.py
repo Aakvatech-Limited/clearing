@@ -3,8 +3,8 @@
 
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate
-from typing import Optional
+from frappe.utils import flt, nowdate, cstr
+from typing import List, Optional
 from clearing.api.utils import (
     get_expense_account,
     get_cash_or_bank_account,
@@ -59,7 +59,9 @@ def create_or_update_journal_entry_for_clearance(doc, method=None):
     # Backfill payment date into the clearance document (allow_on_submit field)
     try:
         if frappe.db.has_column(doc.doctype, "paid_from"):
-            frappe.db.set_value(doc.doctype, doc.name, "paid_from", je.posting_date)
+            doc.paid_from = je.posting_date
+            # update without bumping modified timestamp or requiring manual refresh
+            doc.db_set("paid_from", je.posting_date, update_modified=False, commit=True)
     except Exception:
         # Non-fatal if field doesn't exist on a particular clearance doctype
         pass
@@ -170,12 +172,28 @@ def cancel_journal_entry_on_clearance_cancel(doc, method=None):
 
 
 @frappe.whitelist()
+def _normalize_optional_amount(value) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, str):
+        value = value.strip()
+        if not value:
+            return None
+    try:
+        number = flt(value)
+    except Exception:
+        frappe.throw(_("Unable to parse the amount value."))
+    return number
+
+
 def make_payment_entry_from_journal_entry(
     journal_entry: str,
     party_account: Optional[str] = None,
     allocated_amount: Optional[float] = None,
 ):
     from erpnext.accounts.doctype.payment_entry.payment_entry import get_party_details
+
+    allocated_amount = _normalize_optional_amount(allocated_amount)
 
     je = frappe.get_doc("Journal Entry", journal_entry)
     if je.docstatus != 1:
@@ -391,5 +409,273 @@ def make_payment_entry_from_journal_entry(
         True  # New: Allow manual header edits without ref validation
     )
     pe.flags.clearing_je_marker = je.name  # Store the selected JE name
+
+    return pe
+
+
+def _coerce_journal_entry_list(journal_entries) -> List[str]:
+    if journal_entries is None:
+        return []
+
+    if isinstance(journal_entries, str):
+        try:
+            parsed = frappe.parse_json(journal_entries)
+            if isinstance(parsed, (list, tuple)):
+                journal_entries = list(parsed)
+            else:
+                journal_entries = [journal_entries]
+        except Exception:
+            journal_entries = [journal_entries]
+
+    result: List[str] = []
+    seen = set()
+    for entry in journal_entries or []:
+        name = cstr(entry).strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        result.append(name)
+    return result
+
+
+def _find_party_account_for_entries(
+    journal_entries: List[object],
+    party_type: Optional[str],
+    party: Optional[str],
+    payment_type: str,
+) -> Optional[str]:
+    if not journal_entries or not party_type or not party:
+        return None
+
+    candidate_accounts = []
+    for je in journal_entries:
+        for row in getattr(je, "accounts", []) or []:
+            if row.get("party_type") != party_type or row.get("party") != party:
+                continue
+            debit = flt(row.get("debit_in_account_currency") or row.get("debit") or 0)
+            credit = flt(row.get("credit_in_account_currency") or row.get("credit") or 0)
+            if payment_type == "Receive" and debit > 0:
+                candidate_accounts.append(row.get("account"))
+            elif payment_type == "Pay" and credit > 0:
+                candidate_accounts.append(row.get("account"))
+
+    if not candidate_accounts:
+        return None
+
+    # Prefer the account that appears most frequently
+    counts = {}
+    for acc in candidate_accounts:
+        if acc:
+            counts[acc] = counts.get(acc, 0) + 1
+    if not counts:
+        return None
+    preferred = max(counts.items(), key=lambda x: x[1])[0]
+    return preferred
+
+
+@frappe.whitelist()
+def make_payment_entry_from_journal_entries(
+    journal_entries,
+    total_amount: Optional[float] = None,
+):
+    names = _coerce_journal_entry_list(journal_entries)
+    if not names:
+        frappe.throw(_("Please select at least one Journal Entry."))
+
+    total_amount = _normalize_optional_amount(total_amount)
+
+    if len(names) == 1:
+        return make_payment_entry_from_journal_entry(
+            names[0],
+            allocated_amount=total_amount,
+        )
+
+    docs = [frappe.get_doc("Journal Entry", name) for name in names]
+    for je in docs:
+        if je.docstatus != 1:
+            frappe.throw(
+                _("Only submitted Journal Entry can be used to create a Payment Entry (found {0}).").format(
+                    je.name
+                )
+            )
+
+    base_company = docs[0].company
+    if any(je.company != base_company for je in docs):
+        frappe.throw(_("Selected Journal Entries must belong to the same company."))
+
+    base_summary = get_journal_entry_party_summary(docs[0])
+    party_type = base_summary.party_type
+    party = base_summary.party
+    if not party_type or not party:
+        frappe.throw(
+            _("Journal Entry {0} is missing party information. Cannot prepare Payment Entry.").format(
+                docs[0].name
+            )
+        )
+
+    summaries = []
+    total_outstanding = 0.0
+    for je in docs:
+        summary = get_journal_entry_party_summary(je, party_type=party_type, party=party)
+        if summary.party_type != party_type or summary.party != party:
+            frappe.throw(
+                _("Journal Entry {0} has a different party from the others.").format(je.name)
+            )
+        outstanding = flt(summary.outstanding or 0)
+        if outstanding <= 0:
+            continue
+        summaries.append((je, summary))
+        total_outstanding += outstanding
+
+    if not summaries:
+        frappe.throw(_("The selected Journal Entries have no outstanding balance."))
+
+    payment_type = (
+        "Receive"
+        if party_type == "Customer"
+        else ("Pay" if party_type == "Supplier" else "Receive")
+    )
+
+    pe = frappe.new_doc("Payment Entry")
+    pe.payment_type = payment_type
+    pe.company = base_company
+    pe.posting_date = nowdate()
+
+    joined_names = ", ".join(names)
+    note = _(f"[CFJE:{joined_names}] Clearing payment for {party_type or ''} {party or ''}")
+    try:
+        meta = frappe.get_meta("Payment Entry")
+    except Exception:
+        meta = None
+
+    try:
+        if meta and meta.has_field("custom_remarks"):
+            pe.custom_remarks = note
+    except Exception:
+        pass
+    pe.remarks = note
+
+    pe.party_type = party_type
+    pe.party = party
+
+    party_details = None
+    if party_type and party:
+        from erpnext.accounts.doctype.payment_entry.payment_entry import get_party_details
+
+        party_details = get_party_details(
+            company=pe.company,
+            party_type=party_type,
+            party=party,
+            date=pe.posting_date,
+            cost_center=None,
+        )
+
+    preferred_party_account = _find_party_account_for_entries(docs, party_type, party, payment_type)
+    if preferred_party_account:
+        if payment_type == "Receive":
+            pe.paid_from = preferred_party_account
+            pe.paid_from_account_currency = frappe.get_cached_value(
+                "Account", preferred_party_account, "account_currency"
+            )
+        else:
+            pe.paid_to = preferred_party_account
+            pe.paid_to_account_currency = frappe.get_cached_value(
+                "Account", preferred_party_account, "account_currency"
+            )
+    elif party_details:
+        if payment_type == "Receive":
+            pe.paid_from = party_details.get("party_account")
+            pe.paid_from_account_currency = party_details.get("party_account_currency")
+            pe.paid_from_account_balance = party_details.get("account_balance")
+        else:
+            pe.paid_to = party_details.get("party_account")
+            pe.paid_to_account_currency = party_details.get("party_account_currency")
+            pe.paid_to_account_balance = party_details.get("account_balance")
+
+    try:
+        bank_gl = get_cash_or_bank_account(pe.company)
+        if payment_type == "Receive":
+            if not pe.paid_to:
+                pe.paid_to = bank_gl
+                pe.paid_to_account_currency = frappe.get_cached_value(
+                    "Account", bank_gl, "account_currency"
+                )
+        else:
+            if not pe.paid_from:
+                pe.paid_from = bank_gl
+                pe.paid_from_account_currency = frappe.get_cached_value(
+                    "Account", bank_gl, "account_currency"
+                )
+    except Exception:
+        pass
+
+    if party_details:
+        pe.party_balance = party_details.get("party_balance")
+        pe.party_name = party_details.get("party_name")
+        if party_details.get("party_bank_account"):
+            pe.party_bank_account = party_details.get("party_bank_account")
+        if party_details.get("bank_account"):
+            pe.bank_account = party_details.get("bank_account")
+
+    pe.set("references", [])
+    remaining = flt(total_amount) if total_amount else None
+    total_allocated = 0.0
+    consumed = set()
+    for je, summary in summaries:
+        outstanding = flt(summary.outstanding or 0)
+        if outstanding <= 0:
+            continue
+        if remaining is not None and remaining <= 0:
+            break
+        allocated = outstanding
+        if remaining is not None:
+            allocated = min(outstanding, remaining)
+            remaining -= allocated
+        if allocated <= 0:
+            continue
+        pe.append(
+            "references",
+            {
+                "reference_doctype": "Journal Entry",
+                "reference_name": je.name,
+                "due_date": getattr(je, "posting_date", None),
+                "total_amount": flt(summary.total or 0),
+                "outstanding_amount": outstanding,
+                "allocated_amount": allocated,
+            },
+        )
+        total_allocated += allocated
+        consumed.add(je.name)
+
+    if total_allocated <= 0:
+        frappe.throw(_("Unable to allocate any amount against the selected Journal Entries."))
+
+    if remaining is not None and remaining > 0 and total_allocated < flt(total_amount):
+        total_allocated = flt(total_amount) - remaining
+
+    if payment_type == "Receive":
+        pe.paid_amount = total_allocated
+        pe.received_amount = total_allocated
+    else:
+        pe.received_amount = total_allocated
+        pe.paid_amount = total_allocated
+
+    pe.flags.ignore_get_outstanding = True
+    pe.flags.ignore_validate_update_after_submit = True
+    pe.flags.dont_validate_allocated = True
+    pe.flags.clearing_je_marker = names
+
+    if remaining is not None and remaining < 0:
+        remaining = 0.0
+
+    # Inform the user if some selected entries were skipped due to zero outstanding or allocation limits
+    skipped = [name for name in names if name not in consumed]
+    if skipped:
+        frappe.msgprint(
+            _("Some Journal Entries were skipped because they have no outstanding balance or no amount was allocated: {0}").format(
+                ", ".join(skipped)
+            ),
+            alert=True,
+        )
 
     return pe

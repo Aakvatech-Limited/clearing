@@ -10,6 +10,9 @@ frappe.listview_settings["Clearing File"] = {
       Delivered: "green",
       "Bills Paid": "gray",
       Cancelled: "red",
+      "Charges Pending": "light gray",
+      "Payment Received": "yellow",
+      Closed: "green",
     };
 
     return [__(doc.status), status_map[doc.status], "status,=," + doc.status];

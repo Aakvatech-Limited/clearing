@@ -16,7 +16,8 @@
   "posting_date",
   "refund",
   "refund_date",
-  "refund_amount"
+  "refund_amount",
+  "amended_from"
  ],
  "fields": [
   {
@@ -78,12 +79,23 @@
    "fieldname": "refund_amount",
    "fieldtype": "Float",
    "label": "Refund Amount"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Container Interchange",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 08:56:18.449846",
+ "modified": "2025-10-23 09:58:45.273667",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Container Interchange",

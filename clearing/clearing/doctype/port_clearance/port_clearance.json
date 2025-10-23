@@ -89,15 +89,9 @@
   {
    "fieldname": "staff_id",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Staff ID",
    "options": "Employee"
-  },
-  {
-   "fetch_from": "staff_id.employee_name",
-   "fieldname": "staff_name",
-   "fieldtype": "Data",
-   "label": "Staff Name",
-   "read_only": 1
   },
   {
    "default": "0",
@@ -191,12 +185,20 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
+  },
+  {
+   "depends_on": "staff_id",
+   "fetch_from": "staff_id.employee_name",
+   "fieldname": "staff_name",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Staff Name"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-15 14:12:09.322499",
+ "modified": "2025-10-23 08:06:23.925982",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

@@ -132,15 +132,9 @@
   {
    "fieldname": "staff_id",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Staff Id",
    "options": "Employee"
-  },
-  {
-   "fetch_from": "staff_id.employee_name",
-   "fieldname": "staff_name",
-   "fieldtype": "Data",
-   "label": "Staff Name",
-   "read_only": 1
   },
   {
    "fieldname": "loading_date",
@@ -172,13 +166,21 @@
    "fieldtype": "Datetime",
    "label": "Interchange Date and Time",
    "mandatory_depends_on": "eval:doc.has_container_interchange == 1"
+  },
+  {
+   "depends_on": "staff_id",
+   "fetch_from": "staff_id.employee_name",
+   "fieldname": "staff_name",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
+   "label": "Staff Name"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-02 08:53:44.461234",
+ "modified": "2025-10-23 08:07:23.602824",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "CF Delivery Note",

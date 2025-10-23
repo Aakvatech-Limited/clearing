@@ -49,7 +49,7 @@
   },
   {
    "fieldname": "inspection_date",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Inspection Date"
@@ -115,6 +115,7 @@
   {
    "fieldname": "staff_id",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Staff ID",
    "options": "Employee"
   },
@@ -126,6 +127,7 @@
    "fetch_from": "staff_id.employee_name",
    "fieldname": "staff_name",
    "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "label": "Staff Name",
    "read_only": 1
   },
@@ -255,7 +257,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-15 14:13:11.206707",
+ "modified": "2025-10-23 08:06:01.835115",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

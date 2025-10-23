@@ -17,10 +17,15 @@ class ClearingFile(Document):
         self.enforce_tancis_fields_immutable()
 
     def before_submit(self):
-        # Allow submission when Delivered or Payment Received as per revised flow
-        if self.status not in ("Delivered", "Payment Received"):
+        if self.status == "Delivered" and not self._has_clearing_charges():
             frappe.throw(
-                _("Cannot submit Clearing File unless status is 'Delivered' or 'Payment Received'."),
+                _("Create Clearing Charges for this file before submitting."),
+                title=_("Clearing Charges Required"),
+            )
+        # Allow submission only when payment has been received
+        if self.status != "Payment Received":
+            frappe.throw(
+                _("Cannot submit Clearing File unless status is Payment Received."),
                 title=_("Invalid Status"),
             )
         # On submit, enforce that all required documents are attached
@@ -221,6 +226,16 @@ class ClearingFile(Document):
                 _("You cannot change this field after it has been set."),
                 title=label,
             )
+
+    def _has_clearing_charges(self) -> bool:
+        if self.is_new() or not self.name:
+            return False
+        return bool(
+            frappe.db.exists(
+                "Clearing Charges",
+                {"clearing_file": self.name, "docstatus": ["<", 2]},
+            )
+        )
 
     def check_and_validate_clearing_charges(self):
         mode_of_transport = self.mode_of_transport

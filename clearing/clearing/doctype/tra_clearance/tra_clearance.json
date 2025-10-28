@@ -10,19 +10,26 @@
   "clearing_file",
   "customer",
   "mode_of_transport",
+  "awbbl_no",
   "column_break_yxf5j",
   "posting_date",
   "status",
   "customs_value",
-  "total_charges_section",
-  "total_charges",
-  "column_break_7tyvu",
-  "paid_by_clearing_agent",
-  "paid_from",
-  "invoice_paid",
   "assessment_document_section",
   "issue_date",
   "paid_date",
+  "paid_by_consignee",
+  "charge",
+  "paid_by",
+  "section_break_thzk",
+  "tra_charges",
+  "total_charges",
+  "paid_from",
+  "total_charges_section",
+  "paid_by_clearing_agent",
+  "invoice_paid",
+  "total_paid",
+  "column_break_7tyvu",
   "document_section_section",
   "attach_documents",
   "section_break_lps6b",
@@ -142,19 +149,19 @@
   {
    "fieldname": "total_charges_section",
    "fieldtype": "Section Break",
-   "label": "Total Charges"
+   "label": "Total Payment"
   },
   {
    "fieldname": "total_charges",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total charges"
+   "label": "Total Paid By Clearing Agent"
   },
   {
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Charges Paid"
+   "label": "TRA Charges Paid"
   },
   {
    "default": "now",
@@ -181,12 +188,52 @@
    "fieldname": "customs_value",
    "fieldtype": "Currency",
    "label": "Customs Value (FOB/CIF)"
+  },
+  {
+   "fieldname": "section_break_thzk",
+   "fieldtype": "Section Break",
+   "label": "Paid By Clearing Agent "
+  },
+  {
+   "fieldname": "tra_charges",
+   "fieldtype": "Table",
+   "label": "TRA Charges",
+   "options": "TRA Charges"
+  },
+  {
+   "fieldname": "paid_by_consignee",
+   "fieldtype": "Section Break",
+   "label": "Paid by Consignee"
+  },
+  {
+   "fieldname": "total_paid",
+   "fieldtype": "Currency",
+   "label": "Total Paid"
+  },
+  {
+   "fieldname": "charge",
+   "fieldtype": "Table",
+   "label": "TRA Charges ",
+   "options": "TRA Charges Paid"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Paid By Consignee"
+  },
+  {
+   "fetch_from": "clearing_file.awbbl_no",
+   "fieldname": "awbbl_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AWB/BL No"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-15 14:13:43.453845",
+ "modified": "2025-10-27 14:35:04.167248",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

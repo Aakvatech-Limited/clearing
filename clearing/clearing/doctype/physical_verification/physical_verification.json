@@ -7,10 +7,15 @@
  "engine": "InnoDB",
  "field_order": [
   "clearing_file",
+  "awbbl_no",
   "column_break_uyof8",
   "posting_date",
   "verification_status",
   "status",
+  "field_department_section",
+  "staff_id",
+  "column_break_cma1x",
+  "staff_name",
   "verification_section",
   "consignee",
   "consignee_address",
@@ -22,16 +27,19 @@
   "wharfage_invoice_section",
   "issue_date",
   "paid_date",
-  "total_charges_section",
+  "paid_by_consignee_section",
+  "charge",
+  "paid_by",
+  "section_break_pqpp",
+  "physical_charges",
   "total_charges",
-  "column_break_ktifs",
-  "invoice_paid",
   "paid_from",
+  "total_charges_section",
+  "column_break_idnw",
   "paid_by_clearing_agent",
-  "field_department_section",
-  "staff_id",
-  "column_break_cma1x",
-  "staff_name",
+  "invoice_paid",
+  "total_paid",
+  "column_break_ktifs",
   "document_section_section",
   "attach_documents",
   "document",
@@ -170,12 +178,12 @@
   {
    "fieldname": "total_charges_section",
    "fieldtype": "Section Break",
-   "label": "Total Charges"
+   "label": "Total Verification Charges"
   },
   {
    "fieldname": "total_charges",
    "fieldtype": "Currency",
-   "label": "Total Charges"
+   "label": "Total Charges Disbursed"
   },
   {
    "default": "0",
@@ -252,12 +260,55 @@
    "fieldname": "paid_date",
    "fieldtype": "Date",
    "label": "Paid Date"
+  },
+  {
+   "fieldname": "section_break_pqpp",
+   "fieldtype": "Section Break",
+   "label": "Paid by Clearing Agent"
+  },
+  {
+   "fieldname": "physical_charges",
+   "fieldtype": "Table",
+   "label": "Verification Charges",
+   "options": "Verification Charges"
+  },
+  {
+   "fieldname": "paid_by_consignee_section",
+   "fieldtype": "Section Break",
+   "label": "Paid by Consignee"
+  },
+  {
+   "fieldname": "column_break_idnw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_paid",
+   "fieldtype": "Currency",
+   "label": "Total Paid"
+  },
+  {
+   "fieldname": "charge",
+   "fieldtype": "Table",
+   "label": "Verification Charges ",
+   "options": "Verification Charges"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Currency",
+   "label": "Total Paid by Consignee"
+  },
+  {
+   "fetch_from": "clearing_file.awbbl_no",
+   "fieldname": "awbbl_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AWB/BL No"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 08:06:01.835115",
+ "modified": "2025-10-27 14:37:17.379261",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Physical Verification",

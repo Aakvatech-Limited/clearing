@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "clearing_file",
+  "awbbl_no",
   "cf_delivery_note",
   "has_transit_bond",
   "key_reference",
@@ -22,12 +23,18 @@
   "staff_id",
   "column_break_kj4eh",
   "staff_name",
-  "total_charges_section",
+  "paid_by_consignee_section",
+  "charge",
+  "paid_by",
+  "section_break_yaiq",
+  "port_charges",
   "total_charges",
-  "column_break_ayxk7",
-  "paid_by_clearing_agent",
   "paid_from",
+  "total_charges_section",
+  "paid_by_clearing_agent",
   "invoice_paid",
+  "total_paid",
+  "column_break_ayxk7",
   "document_section_section",
   "attach_documents",
   "section_break_muabn",
@@ -141,7 +148,7 @@
   {
    "fieldname": "total_charges",
    "fieldtype": "Currency",
-   "label": "Total Charges"
+   "label": "Total Charges Paid by Clearing Agent "
   },
   {
    "fieldname": "column_break_ayxk7",
@@ -151,7 +158,7 @@
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Charges Paid"
+   "label": "Port Charges Paid"
   },
   {
    "allow_on_submit": 1,
@@ -193,12 +200,51 @@
    "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "label": "Staff Name"
+  },
+  {
+   "fieldname": "section_break_yaiq",
+   "fieldtype": "Section Break",
+   "label": "Paid By Clearing Agent "
+  },
+  {
+   "fieldname": "port_charges",
+   "fieldtype": "Table",
+   "label": "Port Charges",
+   "options": "Port Charges"
+  },
+  {
+   "fieldname": "paid_by_consignee_section",
+   "fieldtype": "Section Break",
+   "label": "Paid by Consignee"
+  },
+  {
+   "fieldname": "total_paid",
+   "fieldtype": "Currency",
+   "label": "Total Paid"
+  },
+  {
+   "fieldname": "charge",
+   "fieldtype": "Table",
+   "label": "Port Charges",
+   "options": "Port Charges Paid"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Currency",
+   "label": "Total Charges Paid By Consignee"
+  },
+  {
+   "fetch_from": "clearing_file.awbbl_no",
+   "fieldname": "awbbl_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AWB/BL No"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 08:06:23.925982",
+ "modified": "2025-10-27 14:38:15.380679",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

@@ -2,7 +2,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.contacts.doctype.address.address import get_address_display
 from frappe import _
-from frappe.utils import cstr
+from frappe.utils import cstr, nowdate
 
 
 class ClearingFile(Document):
@@ -15,6 +15,8 @@ class ClearingFile(Document):
         self.update_port_clearance_transit_bond()
         # Prevent editing TANCIS details after they have been captured
         self.enforce_tancis_fields_immutable()
+        # Stamp the cleared date when status moves to Cleared
+        self._ensure_cleared_date()
 
     def before_submit(self):
         if self.status == "Delivered" and not self._has_clearing_charges():
@@ -38,6 +40,7 @@ class ClearingFile(Document):
 
         # Check for unreturned transit bonds and show notification
         self.check_transit_bond_status()
+        self.ensure_transit_bond_returned_if_required()
 
     def on_update_after_submit(self):
         # Check for unreturned transit bonds when status changes to Delivered
@@ -159,7 +162,27 @@ class ClearingFile(Document):
             "tansad_no",
             "declaration_type",
             "cl_plan",
+            "awbbl_no",
         ]
+
+        before = self.get_doc_before_save()
+        changed_fields = []
+        for fieldname in tancis_fields:
+            current_value = cstr(self.get(fieldname) or "").strip()
+
+            previous_value = ""
+            if before:
+                previous_value = cstr(before.get(fieldname) or "").strip()
+            elif not self.is_new():
+                previous_value = cstr(
+                    self.get_db_value(fieldname) or ""
+                ).strip()
+
+            if current_value != previous_value:
+                changed_fields.append(fieldname)
+
+        if not changed_fields:
+            return
 
         if not any(self.get(field) for field in tancis_fields):
             return
@@ -227,6 +250,23 @@ class ClearingFile(Document):
                 title=label,
             )
 
+    def _ensure_cleared_date(self):
+        """Automatically capture the date when the file is marked as cleared."""
+        if (self.status or "").strip() != "Cleared":
+            return
+
+        previous_status = None
+        if not self.is_new():
+            previous_status = frappe.db.get_value(self.doctype, self.name, "status")
+            if previous_status:
+                previous_status = previous_status.strip()
+
+        if previous_status == "Cleared" and self.cleared_date:
+            return
+
+        if not self.cleared_date or previous_status != "Cleared":
+            self.cleared_date = nowdate()
+
     def _has_clearing_charges(self) -> bool:
         if self.is_new() or not self.name:
             return False
@@ -240,6 +280,18 @@ class ClearingFile(Document):
     def _validate_container_interchange_submission(self):
         if self.is_new() or not self.name:
             return
+
+        requires_interchange = frappe.db.exists(
+            "CF Delivery Note",
+            {
+                "clearing_file": self.name,
+                "has_container_interchange": 1,
+                "docstatus": ["<", 2],
+            },
+        )
+        if not requires_interchange:
+            return
+
         info = check_container_interchange_completion(self.name)
         final_done = bool(info.get("final_done"))
         refund_done = bool(info.get("refund_done"))
@@ -422,6 +474,15 @@ class ClearingFile(Document):
                         indicator="orange"
                     )
 
+    def ensure_transit_bond_returned_if_required(self):
+        if (
+            (self.declaration_type or "").strip() == "IM8 TRANSIT AND TRANSHIPMENT"
+            and not frappe.utils.cint(self.bond_returned)
+        ):
+            frappe.throw(
+                _("Please update the bond return before submitting this shipment.")
+            )
+
 
 def ensure_all_documents_attached(self, type):
     # Fetch required documents for "Pre-Lodged" status from "Mode of Transport Detail"
@@ -519,8 +580,19 @@ def update_status_to_cleared(doc, method):
             return
 
     clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
-    if clearing_file_doc.status != "Cleared":
+    status_now = (clearing_file_doc.status or "").strip()
+    needs_save = False
+
+    if status_now != "Cleared":
         clearing_file_doc.status = "Cleared"
+        status_now = "Cleared"
+        needs_save = True
+
+    if status_now == "Cleared" and not clearing_file_doc.cleared_date:
+        clearing_file_doc.cleared_date = nowdate()
+        needs_save = True
+
+    if needs_save:
         clearing_file_doc.save()
 
 

@@ -37,6 +37,7 @@ frappe.ui.form.on("Clearing File", {
     });
 
     frm.trigger("update_total_container_summary");
+    frm.trigger("bind_cargo_input_handlers");
 
     // Force refresh of submit button
     if (frm.doc.status === "Delivered") {
@@ -267,6 +268,10 @@ frappe.ui.form.on("Clearing File", {
     });
   },
 
+  cargo_details_on_form_rendered: function (frm) {
+    frm.trigger("bind_cargo_input_handlers");
+  },
+
   validate: function (frm) {
     if (frm.__tancis_warning_shown) {
       return;
@@ -348,25 +353,86 @@ frappe.ui.form.on("Clearing File", {
     frm.set_value("cargo_description", descriptions.join("\n"));
   },
 
-  update_total_container_summary: function (frm) {
-    const total = (frm.doc.cargo_details || []).reduce((sum, row) => {
-      const quantity = parseFloat(row.quantity_of_container) || 0;
-      return sum + quantity;
-    }, 0);
+  bind_cargo_input_handlers: function (frm) {
+    const cargoField = frm.fields_dict && frm.fields_dict.cargo_details;
+    if (!cargoField || !cargoField.grid) {
+      return;
+    }
 
-    const totalText = String(total || 0);
-    if ((frm.doc.total_container_summary || "0") !== totalText) {
+    const grid = cargoField.grid;
+    const wrapper = $(grid.wrapper);
+    wrapper.off(".cargo-count");
+
+    const handler = () => {
+      // Let Frappe sync the grid value before recalculating
+      setTimeout(() => frm.trigger("update_total_container_summary"), 50);
+    };
+
+    ["container_number", "hs_code"].forEach((fieldname) => {
+      wrapper.on(
+        "change.cargo-count input.cargo-count",
+        `[data-fieldname="${fieldname}"]`,
+        handler
+      );
+    });
+  },
+
+  update_total_container_summary: function (frm) {
+    const allowUpdate = frm.doc.docstatus !== 1;
+    let totalContainers = 0;
+    let totalHsCodes = 0;
+    const splitPattern = /[\s,;]+/;
+
+    (frm.doc.cargo_details || []).forEach((row) => {
+      const containerRaw = (row.container_number || "").trim();
+      const containerCount = containerRaw
+        ? containerRaw.split(splitPattern).filter(Boolean).length
+        : 0;
+      totalContainers += containerCount;
+
+      const existingContainer = Number(row.quantity_of_container) || 0;
+      if (allowUpdate && existingContainer !== containerCount) {
+        frappe.model.set_value(row.doctype, row.name, "quantity_of_container", containerCount);
+      }
+
+      const hsRaw = (row.hs_code || "").trim();
+      const hsCount = hsRaw ? hsRaw.split(splitPattern).filter(Boolean).length : 0;
+      totalHsCodes += hsCount;
+
+      const existingHs = Number(row.quantity_of_hs_code) || 0;
+      if (allowUpdate && existingHs !== hsCount) {
+        frappe.model.set_value(row.doctype, row.name, "quantity_of_hs_code", hsCount);
+      }
+    });
+
+    const totalText = String(totalContainers || 0);
+    if (allowUpdate && (frm.doc.total_container_summary || "0") !== totalText) {
       frm.set_value("total_container_summary", totalText);
+    } else if (!allowUpdate) {
+      frm.refresh_field("total_container_summary");
+    }
+
+    if (frm.fields_dict && frm.fields_dict.total_hs_code_summary) {
+      const totalHsText = String(totalHsCodes || 0);
+      if (allowUpdate) {
+        if ((frm.doc.total_hs_code_summary || "0") !== totalHsText) {
+          frm.set_value("total_hs_code_summary", totalHsText);
+        }
+      } else {
+        frm.refresh_field("total_hs_code_summary");
+      }
     }
   },
 
   cargo_details_add: function (frm) {
     frm.trigger("update_total_container_summary");
+    frm.trigger("bind_cargo_input_handlers");
   },
 
   cargo_details_remove: function (frm) {
     frm.trigger("update_total_container_summary");
     frm.trigger("update_cargo_description");
+    frm.trigger("bind_cargo_input_handlers");
   },
 
   after_save: function (frm) {
@@ -419,7 +485,7 @@ frappe.ui.form.on("Cargo", {
 
   quantity_of_container: function (frm) {
     frm.trigger("update_total_container_summary");
-  },
+  }
 });
 
 // Function to handle the attachment dialog process

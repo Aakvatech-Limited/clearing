@@ -19,15 +19,22 @@
   "column_break_a2owv",
   "posting_date",
   "status",
+  "awbbl_no",
   "staff_id",
   "staff_name",
   "invoice_received",
-  "total_charges_section",
+  "shipping_charges_paid_by_consignee_section",
+  "charge",
+  "paid_by",
+  "section_break_jzrz",
+  "shipping_charges",
   "total_charges",
-  "column_break_r0s5o",
-  "paid_by_clearing_agent",
   "paid_from",
+  "total_charges_section",
+  "paid_by_clearing_agent",
   "invoice_paid",
+  "total_paid",
+  "column_break_r0s5o",
   "section_break_keyml",
   "attach_documents",
   "section_break_uevyo",
@@ -133,12 +140,12 @@
    "fieldname": "total_charges",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Charges"
+   "label": "Total Paid By Clearing Agent"
   },
   {
    "fieldname": "total_charges_section",
    "fieldtype": "Section Break",
-   "label": "Total Charges"
+   "label": "Total Payment"
   },
   {
    "fieldname": "column_break_r0s5o",
@@ -148,7 +155,7 @@
    "default": "0",
    "fieldname": "invoice_paid",
    "fieldtype": "Check",
-   "label": "Charges Paid"
+   "label": "Shipping Charges Paid"
   },
   {
    "fieldname": "drop_off_date",
@@ -165,7 +172,8 @@
    "depends_on": "container_deposit_date",
    "fieldname": "container_deposit_amount",
    "fieldtype": "Currency",
-   "label": "Container Deposit Amount"
+   "label": "Container Deposit Amount",
+   "reqd": 1
   },
   {
    "fieldname": "isuue_date",
@@ -189,12 +197,53 @@
    "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "label": "Staff Name"
+  },
+  {
+   "fieldname": "section_break_jzrz",
+   "fieldtype": "Section Break",
+   "label": "Paid by Clearing Agent"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "shipping_charges",
+   "fieldtype": "Table",
+   "label": "Shipping Charges ",
+   "options": "Shipping Charges"
+  },
+  {
+   "fieldname": "shipping_charges_paid_by_consignee_section",
+   "fieldtype": "Section Break",
+   "label": "Paid by Consignee"
+  },
+  {
+   "fieldname": "total_paid",
+   "fieldtype": "Currency",
+   "label": "Total Paid"
+  },
+  {
+   "fieldname": "charge",
+   "fieldtype": "Table",
+   "in_standard_filter": 1,
+   "label": "Shipping Charges",
+   "options": "Shipping Charges Paid"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Currency",
+   "label": "Total Paid by Consignee"
+  },
+  {
+   "fetch_from": "clearing_file.awbbl_no",
+   "fieldname": "awbbl_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "AWB/BL No"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 08:07:42.519150",
+ "modified": "2025-10-28 10:01:46.054013",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

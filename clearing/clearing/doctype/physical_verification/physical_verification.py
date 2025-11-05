@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from frappe.utils import flt
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
 
 class PhysicalVerification(Document):
@@ -19,6 +20,10 @@ class PhysicalVerification(Document):
             )
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
+        self.set_total_charges()
+        self.set_paid_by_total()
+        self.set_total_paid()
+
         if self.invoice_paid:
             # If the invoice is paid, automatically set the status to 'Payment Completed'
             self.status = "Payment Completed"
@@ -49,6 +54,21 @@ class PhysicalVerification(Document):
 
         if self.verification_status != "Completed":
             frappe.throw(_("You cannot complete Physical Verification unless the verification status is 'Completed'."))
+
+    def set_total_charges(self):
+        """Aggregate child table amounts into the parent total."""
+        total = sum((row.amount or 0) for row in self.get("physical_charges", []))
+        self.total_charges = flt(total, self.precision("total_charges"))
+
+    def set_paid_by_total(self):
+        """Keep the paid-by field in sync with child charge rows."""
+        total = sum((row.amount or 0) for row in self.get("charge", []))
+        self.paid_by = flt(total, self.precision("paid_by"))
+
+    def set_total_paid(self):
+        """Compute total paid by summing total charges and paid-by."""
+        total = (self.total_charges or 0) + (self.paid_by or 0)
+        self.total_paid = flt(total, self.precision("total_paid"))
 
     def before_update_after_submit(self):
         """Keep verification_location synced from Clearing File when submitted.

@@ -1,12 +1,24 @@
 import numbers
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import DocType
-from frappe.utils import cint, flt, now
+from frappe.utils import cint, flt, now, nowdate
+from clearing.api.utils import (
+    get_cash_or_bank_account,
+    get_clearing_receivable_account,
+    get_expense_account,
+)
+
+CLEARANCE_SOURCE_NAMES = {
+    "TRA Clearance",
+    "Port Clearance",
+    "Shipping Line Clearance",
+    "Physical Verification",
+}
 
 
 def _update_fields_if_changed(doctype: str, docname: str, values: Dict[str, object]) -> bool:
@@ -181,6 +193,9 @@ class ClearingCharges(Document):
             "invoice": 0.0,
         }
 
+        manual_total = 0.0
+        non_invoice_total = 0.0
+
         for charge in self.charges:
             amount = flt(charge.amount or 0)
             charge_type = charge.charge_type
@@ -196,12 +211,17 @@ class ClearingCharges(Document):
                 totals["transport"] += amount
             elif charge_type == "Clearing Agency Fee":
                 totals["agency_fee"] += amount
+            elif not cint(getattr(charge, "is_invoice", 0)):
+                manual_total += amount
 
-            if charge.is_invoice:
+            if not cint(getattr(charge, "is_invoice", 0)):
+                non_invoice_total += amount
+
+            if cint(getattr(charge, "is_invoice", 0)):
                 totals["invoice"] += amount
 
         debit_note_total = (
-            totals["tra"] + totals["shipment"] + totals["physical"] + totals["port"]
+            non_invoice_total
         )
         invoice_total = totals["invoice"]
 
@@ -632,6 +652,232 @@ def get_reimbursement_payments_for_journal_entries(clearing_file: str) -> Dict[s
     return {"rows": data, "je_outstanding_total": total_je_outstanding}
 
 
+@frappe.whitelist()
+def get_disbursement_journal_entry_defaults(clearing_file: str) -> Dict[str, object]:
+    if not clearing_file:
+        frappe.throw(_("Clearing File is required"))
+
+    cf = frappe.get_doc("Clearing File", clearing_file)
+
+    company = cf.company or frappe.defaults.get_user_default("Company")
+    if not company:
+        frappe.throw(_("Company is not set on Clearing File {0}").format(clearing_file))
+
+    customer = cf.customer
+    if not customer:
+        frappe.throw(_("Customer is not set on Clearing File {0}").format(clearing_file))
+
+    party_account = get_clearing_receivable_account(company)
+    if not party_account:
+        party_account = get_expense_account("Clearing Charges", company)
+
+    bank_account = get_cash_or_bank_account(company)
+
+    party_account_currency = (
+        frappe.get_cached_value("Account", party_account, "account_currency")
+        if party_account
+        else None
+    )
+    bank_account_currency = None
+    if bank_account:
+        bank_account_currency = frappe.get_cached_value("Account", bank_account, "account_currency")
+
+    return {
+        "company": company,
+        "voucher_type": "Debit Note",
+        "party_type": "Customer",
+        "party": customer,
+        "party_account": party_account,
+        "party_account_currency": party_account_currency,
+        "bank_account": bank_account,
+        "bank_account_currency": bank_account_currency,
+    }
+
+
+@frappe.whitelist()
+def make_disbursement_journal_entries(
+    clearing_charges: str,
+    charges: Union[str, Sequence[str], None] = None,
+    posting_date: Optional[str] = None,
+) -> List[Dict[str, str]]:
+    if not clearing_charges:
+        frappe.throw(_("Clearing Charges is required"))
+
+    raw_charges = charges
+    if raw_charges is None:
+        charges_list: List[str] = []
+    elif isinstance(raw_charges, str):
+        try:
+            parsed = frappe.parse_json(raw_charges)
+        except Exception:
+            frappe.throw(_("Unable to parse the selected charges list."))
+        else:
+            charges_list = parsed if isinstance(parsed, (list, tuple, set)) else [parsed]
+    elif isinstance(raw_charges, (list, tuple, set)):
+        charges_list = list(raw_charges)
+    else:
+        frappe.throw(_("Invalid charges payload."))
+
+    if not charges_list:
+        frappe.throw(_("Please select at least one charge."))
+
+    doc = frappe.get_doc("Clearing Charges", clearing_charges)
+    if doc.docstatus == 2:
+        frappe.throw(_("Cannot create Journal Entries for a cancelled document."))
+
+    if not doc.clearing_file:
+        frappe.throw(_("Please set a Clearing File before creating a Journal Entry."))
+
+    defaults = get_disbursement_journal_entry_defaults(doc.clearing_file)
+    party_account = defaults.get("party_account")
+    bank_account = defaults.get("bank_account")
+    if not party_account or not bank_account:
+        frappe.throw(_("Please configure the Receivable and Cash/Bank accounts in Clearing Settings."))
+
+    posting_date = posting_date or nowdate()
+    company = defaults.get("company")
+    if not company:
+        frappe.throw(_("Company is not set on Clearing File {0}").format(doc.clearing_file))
+    voucher_type = defaults.get("voucher_type") or "Debit Note"
+    party_type = defaults.get("party_type")
+    party = defaults.get("party")
+    party_account_currency = defaults.get("party_account_currency")
+    bank_account_currency = defaults.get("bank_account_currency")
+
+    selected = {name for name in charges_list if isinstance(name, str) and name.strip()}
+    if not selected:
+        frappe.throw(_("No valid charges were selected."))
+
+    created: List[Dict[str, str]] = []
+    require_save = doc.docstatus == 0
+
+    for charge in doc.get("charges", []):
+        if charge.name not in selected:
+            continue
+
+        if cint(getattr(charge, "is_invoice", 0)) == 1:
+            continue
+
+        if (getattr(charge, "charge_type", "") or "").strip() in CLEARANCE_SOURCE_NAMES:
+            continue
+
+        if getattr(charge, "disbursement", None):
+            continue
+
+        amount = flt(getattr(charge, "amount", 0))
+        if amount <= 0:
+            continue
+
+        header_remark, account_remark = _build_disbursement_remarks(doc, charge)
+
+        je = frappe.new_doc("Journal Entry")
+        je.voucher_type = voucher_type
+        je.posting_date = posting_date
+        je.clearing_file = doc.clearing_file
+        if company:
+            je.company = company
+        if header_remark:
+            je.user_remark = header_remark
+            je.remark = header_remark
+
+        reference_allowed = {
+            "Sales Invoice",
+            "Purchase Invoice",
+            "Journal Entry",
+            "Sales Order",
+            "Purchase Order",
+            "Expense Claim",
+            "Asset",
+            "Loan",
+            "Payroll Entry",
+            "Employee Advance",
+            "Exchange Rate Revaluation",
+            "Invoice Discounting",
+            "Fees",
+            "Full and Final Statement",
+            "Payment Entry",
+        }
+
+        reference_type = doc.doctype if doc.doctype in reference_allowed else None
+
+        debit_row = {
+            "account": party_account,
+            "debit_in_account_currency": amount,
+            "credit_in_account_currency": 0,
+        }
+        if party_account_currency:
+            debit_row["account_currency"] = party_account_currency
+        if party_type:
+            debit_row["party_type"] = party_type
+        if party:
+            debit_row["party"] = party
+        if account_remark:
+            debit_row["user_remark"] = account_remark
+        if reference_type:
+            debit_row["reference_type"] = reference_type
+            debit_row["reference_name"] = doc.name
+
+        credit_row = {
+            "account": bank_account,
+            "debit_in_account_currency": 0,
+            "credit_in_account_currency": amount,
+        }
+        if bank_account_currency:
+            credit_row["account_currency"] = bank_account_currency
+        if account_remark:
+            credit_row["user_remark"] = account_remark
+        if reference_type:
+            credit_row["reference_type"] = reference_type
+            credit_row["reference_name"] = doc.name
+
+        je.set("accounts", [])
+        je.append("accounts", debit_row)
+        je.append("accounts", credit_row)
+        je.insert()
+        je.submit()
+
+        charge.disbursement = je.name
+        charge.disbursed_date = posting_date
+        if doc.docstatus == 0:
+            require_save = True
+        elif getattr(charge, "doctype", None) and getattr(charge, "name", None):
+            frappe.db.set_value(
+                charge.doctype,
+                charge.name,
+                {"disbursement": je.name, "disbursed_date": posting_date},
+            )
+
+        created.append({"charge": charge.name, "journal_entry": je.name})
+
+    if require_save and created:
+        doc.save(ignore_permissions=True)
+
+    return created
+
+
+def _build_disbursement_remarks(doc, charge) -> Tuple[str, str]:
+    doc_label = getattr(doc, "doctype", "Clearing Charges")
+    doc_name = (getattr(doc, "name", "") or "").strip()
+    clearing_file = (getattr(doc, "clearing_file", "") or "").strip()
+    charge_type = (getattr(charge, "charge_type", "") or "").strip()
+
+    account_parts: List[str] = []
+    if doc_name:
+        account_parts.append(f"{doc_label}: {doc_name}")
+    if clearing_file:
+        account_parts.append(f"Clearing File {clearing_file}")
+    account_remark = " | ".join(account_parts)
+
+    header_parts: List[str] = []
+    if charge_type:
+        header_parts.append(charge_type)
+    if account_remark:
+        header_parts.append(account_remark)
+    header_remark = " | ".join(header_parts)
+
+    return header_remark, account_remark
+
+
 def _get_total_paid_against_journal_entry(je_name: str) -> float:
     pe_refs = frappe.get_all(
         "Payment Entry Reference",
@@ -865,10 +1111,6 @@ def make_payment_entry_for_clearing_file(clearing_file: str):
     from erpnext.accounts.doctype.payment_entry.payment_entry import (
         get_party_details,
         get_reference_details,
-    )
-    from clearing.api.utils import (
-        get_clearing_receivable_account,
-        get_cash_or_bank_account,
     )
 
     party_type, party = "Customer", cf.customer

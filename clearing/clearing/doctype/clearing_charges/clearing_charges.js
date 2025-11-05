@@ -7,13 +7,21 @@ const CLEARANCE_SOURCES = [
   ["Physical Verification", "Physical Verification"],
 ];
 
+const CLEARANCE_SOURCE_NAMES = CLEARANCE_SOURCES.map(([, chargeType]) => chargeType);
+
 const INVOICE_DEFAULT_ROWS = [
   { charge_type: "Transport" },
   { charge_type: "Clearing Agency Fee" },
 ];
 
 frappe.ui.form.on("Clearing Charges", {
+  async onload(frm) {
+    await setup_disbursement_link_behaviour(frm);
+  },
+
   async refresh(frm) {
+    await setup_disbursement_link_behaviour(frm);
+
     const needsTotals = frm.is_new() || !!frm.doc.__unsaved;
     if (needsTotals) {
       calculate_totals(frm);
@@ -34,17 +42,19 @@ frappe.ui.form.on("Clearing Charges", {
   async clearing_file(frm) {
     await populate_clearance_charges(frm, { resetExisting: true });
     if (frm.doc.clearing_file) {
+      await setup_disbursement_link_behaviour(frm);
       await sync_clearing_service_invoice_metrics(frm);
       fetch_and_set_disbursements(frm);
       fetch_and_set_reimbursements(frm);
     } else {
+      await setup_disbursement_link_behaviour(frm);
       clear_child_table(frm, "reimbursement");
       frm.set_value("total_paid_amount", 0);
       frm.set_value("total_outstanding_amount", 0);
     }
   },
 
-  generate_invoice: function (frm) {
+  generate_invoice(frm) {
     if (frm.is_new()) {
       frappe.msgprint(__("Please save the Clearing Charges before generating an invoice."));
       return;
@@ -66,7 +76,27 @@ frappe.ui.form.on("Clearing Charges", {
     open_invoice_dialog(frm, eligible);
   },
 
-  make_payment(frm) {
+  async make_jv(frm) {
+    if (frm.is_new()) {
+      frappe.msgprint(__("Please save the document first."));
+      return;
+    }
+
+    if (!frm.doc.clearing_file) {
+      frappe.msgprint(__("Please set a Clearing File before creating Journal Entries."));
+      return;
+    }
+
+    const eligible = get_journal_entry_eligible_charges(frm);
+    if (!eligible.length) {
+      frappe.msgprint(__("All non-invoice charges already have a Journal Entry or have zero amount."));
+      return;
+    }
+
+    open_make_jv_dialog(frm, eligible);
+  },
+
+  async make_payment(frm) {
     if (frm.is_new()) {
       frappe.msgprint(__("Please save the document first."));
       return;
@@ -76,6 +106,8 @@ frappe.ui.form.on("Clearing Charges", {
       frappe.msgprint(__("Please set a Clearing File before making a payment."));
       return;
     }
+
+    await ensure_manual_charge_disbursement_entries(frm);
 
     frappe.call({
       method: "clearing.clearing.doctype.clearing_charges.clearing_charges.get_disbursement_journal_entries_detailed",
@@ -209,11 +241,14 @@ function calculate_totals(frm) {
   let physical_total = 0;
   let transport_total = 0;
   let agency_fee_total = 0;
+  let manual_total = 0;
   let invoice_total = 0;
+  let non_invoice_total = 0;
 
   if (frm.doc.charges) {
     frm.doc.charges.forEach(function (charge) {
       const amount = flt(charge.amount || 0);
+      const isInvoice = Number(charge.is_invoice) === 1;
 
       if (charge.charge_type === "TRA Clearance") {
         tra_total += amount;
@@ -227,15 +262,21 @@ function calculate_totals(frm) {
         transport_total += amount;
       } else if (charge.charge_type === "Clearing Agency Fee") {
         agency_fee_total += amount;
+      } else if (!isInvoice) {
+        manual_total += amount;
       }
 
-      if (charge.is_invoice) {
+      if (!isInvoice) {
+        non_invoice_total += amount;
+      }
+
+      if (isInvoice) {
         invoice_total += amount;
       }
     });
   }
 
-  const total = tra_total + port_total + shipment_total + physical_total;
+  const total = non_invoice_total;
   let services_total = 0;
   let services_outstanding_total = 0;
   (frm.doc.clearing_services || []).forEach((row) => {
@@ -295,6 +336,427 @@ function get_invoice_eligible_charges(frm) {
         formattedAmount,
       };
     });
+}
+
+async function setup_disbursement_link_behaviour(frm) {
+  if (!frm) {
+    return;
+  }
+
+  if (!frm.__disbursement_behaviour_initialized) {
+    configure_disbursement_query(frm);
+    configure_disbursement_new_doc_defaults(frm);
+    frm.__disbursement_behaviour_initialized = true;
+  }
+
+  await ensure_disbursement_defaults(frm);
+}
+
+function configure_disbursement_query(frm) {
+  if (!frm || typeof frm.set_query !== "function") {
+    return;
+  }
+
+  frm.set_query("disbursement", "charges", function (doc, cdt, cdn) {
+    const row = (locals[cdt] && locals[cdt][cdn]) || null;
+    if (!doc || !doc.clearing_file || !row) {
+      return {
+        filters: [["Journal Entry", "name", "=", "__invalid__"]],
+      };
+    }
+
+    if (Number(row.is_invoice) === 1) {
+      return {
+        filters: [["Journal Entry", "name", "=", "__invalid__"]],
+      };
+    }
+
+    const filters = {
+      clearing_file: doc.clearing_file,
+      docstatus: ["<", 2],
+    };
+
+    const lockedEntries = (doc.charges || [])
+      .filter(
+        (child) =>
+          child &&
+          child.name !== row.name &&
+          child.disbursement &&
+          child.disbursement !== row.disbursement
+      )
+      .map((child) => child.disbursement);
+    if (lockedEntries.length) {
+      filters.name = ["not in", lockedEntries];
+    }
+
+    if ((row.charge_type || "").trim()) {
+      filters.user_remark = ["like", `${row.charge_type.trim()}%`];
+    }
+
+    return { filters };
+  });
+}
+
+function configure_disbursement_new_doc_defaults(frm) {
+  if (!frm || typeof frm.get_docfield !== "function") {
+    return;
+  }
+
+  const disbursementField = frm.get_docfield("charges", "disbursement");
+  if (!disbursementField) {
+    return;
+  }
+
+  disbursementField.get_route_options_for_new_doc = (row) => {
+    const charge = row && row.doc ? row.doc : null;
+    if (!frm.doc.clearing_file || !charge || Number(charge.is_invoice) === 1) {
+      return {};
+    }
+
+    const { headerRemark, accountRemark } = build_disbursement_user_remark(frm, charge);
+
+    const routeOptions = {
+      clearing_file: frm.doc.clearing_file,
+      voucher_type: "Debit Note",
+    };
+
+    if (frappe.datetime && typeof frappe.datetime.nowdate === "function") {
+      routeOptions.posting_date = frappe.datetime.nowdate();
+    }
+
+    if (headerRemark) {
+      routeOptions.user_remark = headerRemark;
+      routeOptions.remark = headerRemark;
+    }
+
+    const defaults =
+      (frm.__disbursement_defaults && frm.__disbursement_defaults.defaults) || null;
+    if (defaults) {
+      if (defaults.company) {
+        routeOptions.company = defaults.company;
+      }
+      routeOptions.voucher_type = defaults.voucher_type || routeOptions.voucher_type;
+      const accountRows = build_disbursement_account_rows(
+        defaults,
+        charge,
+        accountRemark,
+        frm.doc
+      );
+      if (accountRows.length) {
+        routeOptions.accounts = accountRows;
+      }
+    }
+
+    return routeOptions;
+  };
+}
+
+async function ensure_disbursement_defaults(frm) {
+  const clearingFile = (frm.doc.clearing_file || "").trim();
+  if (!clearingFile) {
+    frm.__disbursement_defaults = null;
+    frm.__disbursement_defaults_request = null;
+    return null;
+  }
+
+  const cached = frm.__disbursement_defaults;
+  if (cached && cached.clearing_file === clearingFile && cached.defaults) {
+    return cached.defaults;
+  }
+
+  const pending = frm.__disbursement_defaults_request;
+  if (pending && pending.clearing_file === clearingFile) {
+    return pending.promise;
+  }
+
+  const promise = frappe
+    .call({
+      method:
+        "clearing.clearing.doctype.clearing_charges.clearing_charges.get_disbursement_journal_entry_defaults",
+      args: { clearing_file: clearingFile },
+    })
+    .then(({ message }) => {
+      const defaults = message || null;
+      frm.__disbursement_defaults = { clearing_file: clearingFile, defaults };
+      return defaults;
+    })
+    .catch((error) => {
+      console.error("Failed to load disbursement journal entry defaults", error);
+      frm.__disbursement_defaults = { clearing_file: clearingFile, defaults: null };
+      return null;
+    })
+    .finally(() => {
+      frm.__disbursement_defaults_request = null;
+    });
+
+  frm.__disbursement_defaults_request = { clearing_file: clearingFile, promise };
+  return promise;
+}
+
+function build_disbursement_user_remark(frm, charge) {
+  const docLabel =
+    (frm.doctype && typeof frm.doctype === "string" && frm.doctype.trim()) || "Clearing Charges";
+  const docName = (frm.doc && frm.doc.name && frm.doc.name.trim()) || "";
+  const clearingFile = (frm.doc.clearing_file || "").trim();
+  const chargeType = (charge && charge.charge_type && charge.charge_type.trim()) || "";
+
+  const coreParts = [];
+  if (docName) {
+    coreParts.push(`${docLabel}: ${docName}`);
+  }
+  if (clearingFile) {
+    coreParts.push(`Clearing File ${clearingFile}`);
+  }
+  const accountRemark = coreParts.join(" | ");
+
+  const headerParts = [];
+  if (chargeType) {
+    headerParts.push(chargeType);
+  }
+  if (accountRemark) {
+    headerParts.push(accountRemark);
+  }
+  const headerRemark = headerParts.join(" | ");
+
+  return { headerRemark, accountRemark };
+}
+
+function build_disbursement_account_rows(defaults, charge, remark, parentDoc) {
+  if (!defaults || !charge) {
+    return [];
+  }
+
+  const amount = Math.abs(flt(charge.amount || 0));
+  if (amount <= 0) {
+    return [];
+  }
+
+  const rows = [];
+  const referenceType = parentDoc && parentDoc.doctype ? parentDoc.doctype : null;
+  const referenceName = parentDoc && parentDoc.name ? parentDoc.name : null;
+  const accountRemark = remark || null;
+
+  if (defaults.party_account) {
+    const debitRow = {
+      doctype: "Journal Entry Account",
+      account: defaults.party_account,
+      debit_in_account_currency: amount,
+      credit_in_account_currency: 0,
+    };
+    if (defaults.party_account_currency) {
+      debitRow.account_currency = defaults.party_account_currency;
+    }
+    if (defaults.party_type) {
+      debitRow.party_type = defaults.party_type;
+    }
+    if (defaults.party) {
+      debitRow.party = defaults.party;
+    }
+    if (accountRemark) {
+      debitRow.user_remark = accountRemark;
+    }
+    if (referenceType && referenceName) {
+      debitRow.reference_type = referenceType;
+      debitRow.reference_name = referenceName;
+    }
+    rows.push(debitRow);
+  }
+
+  if (defaults.bank_account) {
+    const creditRow = {
+      doctype: "Journal Entry Account",
+      account: defaults.bank_account,
+      debit_in_account_currency: 0,
+      credit_in_account_currency: amount,
+    };
+    if (defaults.bank_account_currency) {
+      creditRow.account_currency = defaults.bank_account_currency;
+    }
+    if (accountRemark) {
+      creditRow.user_remark = accountRemark;
+    }
+    if (referenceType && referenceName) {
+      creditRow.reference_type = referenceType;
+      creditRow.reference_name = referenceName;
+    }
+    rows.push(creditRow);
+  }
+
+  return rows;
+}
+
+function get_journal_entry_eligible_charges(frm) {
+  const currency =
+    frm.doc.currency ||
+    (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency);
+
+  return (frm.doc.charges || [])
+    .filter((charge) => {
+      if (!charge) {
+        return false;
+      }
+      if (Number(charge.is_invoice) === 1) {
+        return false;
+      }
+      if (CLEARANCE_SOURCE_NAMES.includes((charge.charge_type || "").trim())) {
+        return false;
+      }
+      if (flt(charge.amount || 0) <= 0) {
+        return false;
+      }
+      if (charge.disbursement) {
+        return false;
+      }
+      return true;
+    })
+    .map((charge, index) => {
+      const idx = charge.idx || index + 1;
+      const key = charge.name || `charge-${idx}`;
+      const amount = flt(charge.amount || 0);
+      const label = `${charge.charge_type || __("Charge")} | ${format_currency(amount, currency)}`;
+      return {
+        key,
+        idx,
+        charge,
+        label,
+        amount,
+        currency,
+      };
+    });
+}
+
+function open_make_jv_dialog(frm, eligibleCharges) {
+  const valueMap = {};
+  const options = eligibleCharges.map((entry) => {
+    valueMap[entry.key] = entry.charge;
+    return {
+      label: entry.label,
+      value: entry.key,
+      checked: true,
+    };
+  });
+
+  const dialog = new frappe.ui.Dialog({
+    title: __("Create Journal Entries"),
+    fields: [
+      {
+        fieldname: "charges",
+        label: __("Charges"),
+        fieldtype: "MultiCheck",
+        options,
+        reqd: 1,
+        columns: "20rem",
+      },
+      {
+        fieldname: "posting_date",
+        label: __("Posting Date"),
+        fieldtype: "Date",
+        default: frappe.datetime && frappe.datetime.nowdate ? frappe.datetime.nowdate() : undefined,
+      },
+    ],
+    primary_action_label: __("Create"),
+    async primary_action(values) {
+      const selected = (values.charges || []).filter(Boolean);
+      if (!selected.length) {
+        frappe.msgprint(__("Select at least one charge."));
+        return;
+      }
+
+      const rows = selected
+        .map((value) => valueMap[value])
+        .filter((charge) => !!charge && !!charge.name);
+      if (!rows.length) {
+        frappe.msgprint(__("Unable to locate the selected charges. Please try again."));
+        return;
+      }
+
+      dialog.hide();
+
+      try {
+        const response = await frappe.call({
+          method:
+            "clearing.clearing.doctype.clearing_charges.clearing_charges.make_disbursement_journal_entries",
+          args: {
+            clearing_charges: frm.doc.name,
+            charges: rows.map((row) => row.name),
+            posting_date: values.posting_date,
+          },
+          freeze: true,
+          freeze_message: __("Creating Journal Entries..."),
+        });
+
+        const created = response.message || [];
+        if (created.length) {
+          const names = created.map((item) => item.journal_entry).join(", ");
+          frappe.msgprint(
+            __("Created Journal Entry {0}.", [names]),
+            __("Success")
+          );
+        } else {
+          frappe.msgprint(__("No Journal Entries were created."));
+        }
+        await frm.reload_doc();
+      } catch (error) {
+        console.error("Failed to create journal entries", error);
+      }
+    },
+  });
+
+  dialog.show();
+}
+
+function get_pending_manual_charge_names(frm) {
+  return (frm.doc.charges || [])
+    .filter((charge) => {
+      if (!charge || !charge.name) {
+        return false;
+      }
+      if (Number(charge.is_invoice) === 1) {
+        return false;
+      }
+      if (CLEARANCE_SOURCE_NAMES.includes((charge.charge_type || "").trim())) {
+        return false;
+      }
+      if (charge.disbursement) {
+        return false;
+      }
+      return flt(charge.amount || 0) > 0;
+    })
+    .map((charge) => charge.name);
+}
+
+async function ensure_manual_charge_disbursement_entries(frm) {
+  if (!frm || !frm.doc || !frm.doc.name) {
+    return;
+  }
+
+  const pending = get_pending_manual_charge_names(frm);
+  if (!pending.length) {
+    return;
+  }
+
+  try {
+    await frappe.call({
+      method:
+        "clearing.clearing.doctype.clearing_charges.clearing_charges.make_disbursement_journal_entries",
+      args: {
+        clearing_charges: frm.doc.name,
+        charges: pending,
+        posting_date:
+          frappe.datetime && typeof frappe.datetime.nowdate === "function"
+            ? frappe.datetime.nowdate()
+            : undefined,
+      },
+      freeze: true,
+      freeze_message: __("Preparing Journal Entries..."),
+    });
+    await frm.reload_doc();
+  } catch (error) {
+    console.error("Failed to create disbursement journals for manual charges", error);
+    frappe.msgprint(
+      __("Unable to prepare Journal Entries for the outstanding manual charges. Please try again.")
+    );
+  }
 }
 
 function open_invoice_dialog(frm, eligibleCharges) {

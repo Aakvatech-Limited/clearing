@@ -14,6 +14,7 @@
   "consigee",
   "service_charge_details_section",
   "charges",
+  "make_jv",
   "section_break_0qrth",
   "column_break_wv5mn",
   "transport_total",
@@ -32,7 +33,6 @@
   "total_sales_invoice",
   "column_break_lirf",
   "outstanding_amount",
-  "section_break_inpr",
   "section_break_ccym",
   "make_payment",
   "reimbursement",
@@ -197,11 +197,6 @@
    "options": "Consignee Reimbursement"
   },
   {
-   "fieldname": "section_break_inpr",
-   "fieldtype": "Section Break",
-   "label": "Paid By Clearing Agent"
-  },
-  {
    "fieldname": "make_payment",
    "fieldtype": "Button",
    "label": "Receive Payment"
@@ -263,12 +258,17 @@
   {
    "fieldname": "column_break_xcki",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "make_jv",
+   "fieldtype": "Button",
+   "label": "Make Journal "
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-22 15:02:36.782517",
+ "modified": "2025-10-28 06:21:11.238047",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Charges",

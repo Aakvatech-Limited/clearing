@@ -22,6 +22,7 @@
   "shipment_type",
   "mode_of_transport",
   "bl_type",
+  "cleared_date",
   "column_break_b8in0",
   "carrier_name",
   "airline",
@@ -385,13 +386,18 @@
    "fieldname": "total_container_summary",
    "fieldtype": "Data",
    "label": "Total Container Summary"
+  },
+  {
+   "fieldname": "cleared_date",
+   "fieldtype": "Date",
+   "label": "Cleared Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-15 20:26:15.341996",
+ "modified": "2025-10-28 10:04:07.552725",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

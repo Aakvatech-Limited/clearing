@@ -5,6 +5,7 @@ frappe.ui.form.on("Shipping Line Clearance", {
   refresh: function (frm) {
     handleDocumentExpiry(frm);
     customizeAttachDocumentsButton();
+    frm.trigger("populate_container_fields");
 
     if (frm.doc.clearing_file) {
       // Fetch clearing file data to get declaration type
@@ -80,6 +81,51 @@ frappe.ui.form.on("Shipping Line Clearance", {
     }
 
     await openDocumentAttachmentDialog(frm);
+  },
+
+  clearing_file: function (frm) {
+    frm.trigger("populate_container_fields");
+  },
+
+  populate_container_fields: function (frm) {
+    if (frm.doc.docstatus === 1) {
+      return;
+    }
+
+    if (!frm.doc.clearing_file) {
+      if (frm.doc.container_no) {
+        frm.set_value("container_no", "");
+      }
+      if (frm.doc.port_of_loading) {
+        frm.set_value("port_of_loading", "");
+      }
+      return;
+    }
+
+    frappe.call({
+      method: "clearing.clearing.doctype.shipping_line_clearance.shipping_line_clearance.get_cargo_container_data",
+      args: { clearing_file: frm.doc.clearing_file },
+      callback(r) {
+        if (!r.message) {
+          return;
+        }
+
+        const data = r.message;
+
+        if (
+          Object.prototype.hasOwnProperty.call(data, "container_no") &&
+          (frm.doc.container_no || "") !== (data.container_no || "")
+        ) {
+          frm.set_value("container_no", data.container_no || "");
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "port_of_loading") &&
+          (frm.doc.port_of_loading || "") !== (data.port_of_loading || "")
+        ) {
+          frm.set_value("port_of_loading", data.port_of_loading || "");
+        }
+      },
+    });
   },
 });
 

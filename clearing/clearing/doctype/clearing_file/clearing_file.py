@@ -1,3 +1,5 @@
+import re
+
 import frappe
 from frappe.model.document import Document
 from frappe.contacts.doctype.address.address import get_address_display
@@ -7,6 +9,7 @@ from frappe.utils import cstr, nowdate
 
 class ClearingFile(Document):
     def before_save(self):
+        self.update_container_summary()
         # Check and possibly update status, but do not enforce it strictly
         self.check_and_update_status()
         # Block saving if TANCIS details are filled before reaching Open
@@ -418,6 +421,43 @@ class ClearingFile(Document):
                     "No related charges found in the related doctypes, submission allowed."
                 )
             )
+
+    def update_container_summary(self):
+        """Update per-row container/HS code counts and total summaries."""
+        total_containers = 0
+        total_hs_codes = 0
+
+        for cargo in self.get("cargo_details", []):
+            container_raw = cstr(cargo.get("container_number"))
+            if container_raw:
+                container_count = len([
+                    code.strip()
+                    for code in re.split(r"[\s,;]+", container_raw)
+                    if code.strip()
+                ])
+            else:
+                container_count = 0
+
+            cargo.quantity_of_container = container_count
+            total_containers += container_count
+
+            hs_raw = cstr(cargo.get("hs_code"))
+            if hs_raw:
+                hs_count = len([
+                    code.strip()
+                    for code in re.split(r"[\s,;]+", hs_raw)
+                    if code.strip()
+                ])
+            else:
+                hs_count = 0
+
+            cargo.quantity_of_hs_code = hs_count
+            total_hs_codes += hs_count
+
+        self.total_container_summary = cstr(total_containers)
+
+        if self.meta.get_field("total_hs_code_summary"):
+            self.total_hs_code_summary = cstr(total_hs_codes)
 
     def update_port_clearance_transit_bond(self):
         """Update has_transit_bond in Port Clearance when declaration_type is IM8 TRANSIT AND TRANSHIPMENT"""

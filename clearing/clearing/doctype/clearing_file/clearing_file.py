@@ -1,3 +1,5 @@
+import re
+
 import frappe
 from frappe.model.document import Document
 from frappe.contacts.doctype.address.address import get_address_display
@@ -7,6 +9,7 @@ from frappe.utils import cstr
 
 class ClearingFile(Document):
     def before_save(self):
+        self.update_container_summary()
         # Check and possibly update status, but do not enforce it strictly
         self.check_and_update_status()
         # Block saving if TANCIS details are filled before reaching Open
@@ -366,6 +369,25 @@ class ClearingFile(Document):
                     "No related charges found in the related doctypes, submission allowed."
                 )
             )
+
+    def update_container_summary(self):
+        """Update per-row container counts and total summary."""
+        total_containers = 0
+        for cargo in self.get("cargo_details", []):
+            raw_value = cstr(cargo.get("container_number"))
+            if raw_value:
+                count = len([
+                    code.strip()
+                    for code in re.split(r"[\s,;]+", raw_value)
+                    if code.strip()
+                ])
+            else:
+                count = 0
+
+            cargo.quantity_of_container = count
+            total_containers += count
+
+        self.total_container_summary = cstr(total_containers)
 
     def update_port_clearance_transit_bond(self):
         """Update has_transit_bond in Port Clearance when declaration_type is IM8 TRANSIT AND TRANSHIPMENT"""

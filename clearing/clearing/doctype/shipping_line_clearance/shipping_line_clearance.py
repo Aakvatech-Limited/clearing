@@ -1,9 +1,12 @@
 # Copyright (c) 2024, Nelson Mpanju and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cstr
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
 
 class ShippingLineClearance(Document):
@@ -28,6 +31,9 @@ class ShippingLineClearance(Document):
 
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
+        # Auto-sync container information from Cargo child table
+        self._update_container_info()
+
         if self.invoice_paid:
             # If the invoice is paid, automatically set the status to 'Payment Completed'
             self.status = "Payment Completed"
@@ -65,3 +71,74 @@ class ShippingLineClearance(Document):
         cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
         if cf_status == "Pre-Lodged":
             frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")
+
+    def _update_container_info(self):
+        """Populate container-related fields from the linked Clearing File cargo details."""
+        if not self.clearing_file:
+            return
+
+        data = get_cargo_container_data(self.clearing_file)
+        container_no = data.get("container_no")
+        port_of_loading = data.get("port_of_loading")
+
+        if container_no is not None:
+            self.container_no = container_no
+        if port_of_loading is not None:
+            self.port_of_loading = port_of_loading
+
+
+@frappe.whitelist()
+def get_cargo_container_data(clearing_file: str | None):
+    """Return aggregated container numbers and ports of loading for a Clearing File."""
+    if not clearing_file:
+        return {}
+
+    cargo_rows = frappe.get_all(
+        "Cargo",
+        filters={
+            "parent": clearing_file,
+            "parenttype": "Clearing File",
+            "parentfield": "cargo_details",
+        },
+        fields=["container_number", "port_of_loading"],
+        order_by="idx asc",
+    )
+
+    container_numbers = []
+    ports = []
+
+    for row in cargo_rows:
+        raw_container = cstr(row.get("container_number")).strip()
+        if raw_container:
+            container_numbers.extend(
+                [
+                    code
+                    for code in (
+                        segment.strip()
+                        for segment in re.split(r"[\s,;]+", raw_container)
+                    )
+                    if code
+                ]
+            )
+
+        raw_port = cstr(row.get("port_of_loading")).strip()
+        if raw_port:
+            ports.append(raw_port)
+
+    container_numbers = _dedupe_preserve_order(container_numbers)
+    ports = _dedupe_preserve_order(ports)
+
+    return {
+        "container_no": ", ".join(container_numbers),
+        "port_of_loading": ", ".join(ports),
+    }
+
+
+def _dedupe_preserve_order(items):
+    seen = set()
+    ordered = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            ordered.append(item)
+    return ordered

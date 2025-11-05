@@ -10,6 +10,8 @@
  "field_order": [
   "clearing_file",
   "consignee",
+  "container_no",
+  "port_of_loading",
   "isuue_date",
   "delivery_order_expire_date",
   "drop_off_date",
@@ -189,12 +191,22 @@
    "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "label": "Staff Name"
+  },
+  {
+   "fieldname": "container_no",
+   "fieldtype": "Data",
+   "label": "Container No"
+  },
+  {
+   "fieldname": "port_of_loading",
+   "fieldtype": "Data",
+   "label": "Port of Loading"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 08:07:42.519150",
+ "modified": "2025-11-05 06:53:04.640777",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

@@ -37,6 +37,7 @@ frappe.ui.form.on("Clearing File", {
     });
 
     frm.trigger("update_total_container_summary");
+    frm.trigger("bind_container_input_handlers");
 
     // Force refresh of submit button
     if (frm.doc.status === "Delivered") {
@@ -267,6 +268,10 @@ frappe.ui.form.on("Clearing File", {
     });
   },
 
+  cargo_details_on_form_rendered: function (frm) {
+    frm.trigger("bind_container_input_handlers");
+  },
+
   validate: function (frm) {
     if (frm.__tancis_warning_shown) {
       return;
@@ -348,25 +353,58 @@ frappe.ui.form.on("Clearing File", {
     frm.set_value("cargo_description", descriptions.join("\n"));
   },
 
+  bind_container_input_handlers: function (frm) {
+    const cargoField = frm.fields_dict && frm.fields_dict.cargo_details;
+    if (!cargoField || !cargoField.grid) {
+      return;
+    }
+
+    const grid = cargoField.grid;
+    const wrapper = $(grid.wrapper);
+    wrapper.off(".container-count");
+    wrapper.on("change.container-count input.container-count", '[data-fieldname="container_number"]', () => {
+      // Let Frappe sync the grid value before recalculating
+      setTimeout(() => frm.trigger("update_total_container_summary"), 50);
+    });
+  },
+
   update_total_container_summary: function (frm) {
-    const total = (frm.doc.cargo_details || []).reduce((sum, row) => {
-      const quantity = parseFloat(row.quantity_of_container) || 0;
-      return sum + quantity;
-    }, 0);
+    const allowUpdate = frm.doc.docstatus !== 1;
+    let total = 0;
+    const splitPattern = /[\s,;]+/;
+
+    (frm.doc.cargo_details || []).forEach((row) => {
+      const rawValue = (row.container_number || "").trim();
+      const count = rawValue ? rawValue.split(splitPattern).filter(Boolean).length : 0;
+      total += count;
+
+      const existingCount = Number(row.quantity_of_container) || 0;
+
+      if (allowUpdate && existingCount !== count) {
+        frappe.model.set_value(row.doctype, row.name, "quantity_of_container", count);
+      }
+    });
 
     const totalText = String(total || 0);
-    if ((frm.doc.total_container_summary || "0") !== totalText) {
+    if (
+      allowUpdate &&
+      (frm.doc.total_container_summary || "0") !== totalText
+    ) {
       frm.set_value("total_container_summary", totalText);
+    } else if (!allowUpdate) {
+      frm.refresh_field("total_container_summary");
     }
   },
 
   cargo_details_add: function (frm) {
     frm.trigger("update_total_container_summary");
+    frm.trigger("bind_container_input_handlers");
   },
 
   cargo_details_remove: function (frm) {
     frm.trigger("update_total_container_summary");
     frm.trigger("update_cargo_description");
+    frm.trigger("bind_container_input_handlers");
   },
 
   after_save: function (frm) {
@@ -419,7 +457,7 @@ frappe.ui.form.on("Cargo", {
 
   quantity_of_container: function (frm) {
     frm.trigger("update_total_container_summary");
-  },
+  }
 });
 
 // Function to handle the attachment dialog process

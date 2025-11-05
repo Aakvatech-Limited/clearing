@@ -17,12 +17,13 @@
   "number_of_packages",
   "seal_number",
   "column_break_2",
-  "weight",
-  "volume",
-  "column_break_3",
   "value",
   "invoice_ref",
   "currency",
+  "weight",
+  "volume",
+  "column_break_3",
+  "port_of_loading",
   "trading_country",
   "country_last_consignment",
   "country_of_destination"
@@ -138,12 +139,17 @@
    "fieldtype": "Select",
    "label": "Container Type",
    "options": "\nLCL\nFCL\nAIR"
+  },
+  {
+   "fieldname": "port_of_loading",
+   "fieldtype": "Data",
+   "label": "Port of Loading"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-07 14:16:55.159642",
+ "modified": "2025-11-05 09:17:49.118242",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Cargo",

@@ -23,8 +23,8 @@
   "paid_by",
   "section_break_thzk",
   "tra_charges",
+  "make_journal",
   "total_charges",
-  "paid_from",
   "total_charges_section",
   "paid_by_clearing_agent",
   "invoice_paid",
@@ -120,13 +120,6 @@
    "label": "Paid By Clearing Agent"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "paid_from",
-   "fieldtype": "Date",
-   "label": "Disbursement Date",
-   "read_only": 1
-  },
-  {
    "fieldname": "attach_documents",
    "fieldtype": "Button",
    "label": "Attach Documents"
@@ -190,6 +183,7 @@
    "label": "Customs Value (FOB/CIF)"
   },
   {
+   "depends_on": "paid_by_clearing_agent",
    "fieldname": "section_break_thzk",
    "fieldtype": "Section Break",
    "label": "Paid By Clearing Agent "
@@ -228,12 +222,17 @@
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "AWB/BL No"
+  },
+  {
+   "fieldname": "make_journal",
+   "fieldtype": "Button",
+   "label": "Make Journal"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-27 14:35:04.167248",
+ "modified": "2025-11-07 09:16:26.264218",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

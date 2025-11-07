@@ -2,12 +2,17 @@
 # For license information, please see license.txt
 
 import re
+from typing import Optional, Sequence, Union
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cstr, flt, cint
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
+from clearing.api.journal_entry import (
+    create_child_table_journal_entries,
+    normalize_child_row_selection,
+)
 
 class ShippingLineClearance(Document):
     def validate(self):
@@ -158,3 +163,28 @@ def _dedupe_preserve_order(items):
             seen.add(item)
             ordered.append(item)
     return ordered
+
+
+@frappe.whitelist()
+def make_journal_entries(
+    name: str,
+    charges: Union[str, Sequence[str], None] = None,
+    posting_date: Optional[str] = None,
+):
+    if not name:
+        frappe.throw(_("Shipping Line Clearance is required."))
+
+    doc = frappe.get_doc("Shipping Line Clearance", name)
+    selected = normalize_child_row_selection(charges)
+    if not selected:
+        frappe.throw(_("Please select at least one charge."))
+
+    return create_child_table_journal_entries(
+        doc,
+        table_field="shipping_charges",
+        selected_names=selected,
+        posting_date=posting_date,
+        label_field="item",
+        journal_field="journal_entry",
+        disbursed_date_field="disbursed_date",
+    )

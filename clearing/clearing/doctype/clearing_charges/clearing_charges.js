@@ -1096,7 +1096,12 @@ function open_payment_dialog(frm, rows) {
   const options = rows.map((row, index) => {
     const outstanding = flt(row.outstanding || 0);
     const labelParts = [row.journal_entry];
-    if (row.clearance_type) {
+    if (row.item_label) {
+      labelParts.push(row.item_label);
+    }
+    if (row.clearance_label) {
+      labelParts.push(row.clearance_label);
+    } else if (row.clearance_type) {
       labelParts.push(row.clearance_type);
     }
     const formattedOutstanding = format_currency(outstanding, currency);

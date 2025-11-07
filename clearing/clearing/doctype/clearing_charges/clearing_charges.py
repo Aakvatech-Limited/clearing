@@ -7,6 +7,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.utils import cint, flt, now, nowdate
+from clearing.api.journal_entry import (
+    get_disbursement_journal_entry_defaults as _get_disbursement_journal_entry_defaults,
+    normalize_child_row_selection,
+)
 from clearing.api.utils import (
     get_cash_or_bank_account,
     get_clearing_receivable_account,
@@ -654,44 +658,7 @@ def get_reimbursement_payments_for_journal_entries(clearing_file: str) -> Dict[s
 
 @frappe.whitelist()
 def get_disbursement_journal_entry_defaults(clearing_file: str) -> Dict[str, object]:
-    if not clearing_file:
-        frappe.throw(_("Clearing File is required"))
-
-    cf = frappe.get_doc("Clearing File", clearing_file)
-
-    company = cf.company or frappe.defaults.get_user_default("Company")
-    if not company:
-        frappe.throw(_("Company is not set on Clearing File {0}").format(clearing_file))
-
-    customer = cf.customer
-    if not customer:
-        frappe.throw(_("Customer is not set on Clearing File {0}").format(clearing_file))
-
-    party_account = get_clearing_receivable_account(company)
-    if not party_account:
-        party_account = get_expense_account("Clearing Charges", company)
-
-    bank_account = get_cash_or_bank_account(company)
-
-    party_account_currency = (
-        frappe.get_cached_value("Account", party_account, "account_currency")
-        if party_account
-        else None
-    )
-    bank_account_currency = None
-    if bank_account:
-        bank_account_currency = frappe.get_cached_value("Account", bank_account, "account_currency")
-
-    return {
-        "company": company,
-        "voucher_type": "Debit Note",
-        "party_type": "Customer",
-        "party": customer,
-        "party_account": party_account,
-        "party_account_currency": party_account_currency,
-        "bank_account": bank_account,
-        "bank_account_currency": bank_account_currency,
-    }
+    return _get_disbursement_journal_entry_defaults(clearing_file)
 
 
 @frappe.whitelist()
@@ -703,21 +670,7 @@ def make_disbursement_journal_entries(
     if not clearing_charges:
         frappe.throw(_("Clearing Charges is required"))
 
-    raw_charges = charges
-    if raw_charges is None:
-        charges_list: List[str] = []
-    elif isinstance(raw_charges, str):
-        try:
-            parsed = frappe.parse_json(raw_charges)
-        except Exception:
-            frappe.throw(_("Unable to parse the selected charges list."))
-        else:
-            charges_list = parsed if isinstance(parsed, (list, tuple, set)) else [parsed]
-    elif isinstance(raw_charges, (list, tuple, set)):
-        charges_list = list(raw_charges)
-    else:
-        frappe.throw(_("Invalid charges payload."))
-
+    charges_list = normalize_child_row_selection(charges)
     if not charges_list:
         frappe.throw(_("Please select at least one charge."))
 
@@ -908,23 +861,47 @@ def get_disbursement_journal_entries_detailed(clearing_file: str) -> List[Dict]:
     results = []
     for je_name in submitted_je_names:
         je = frappe.get_doc("Journal Entry", je_name)
-        clearance_type = None
-        if je.user_remark:
-            head = je.user_remark.split("|")[0].strip()
-            if ":" in head:
-                clearance_type = head.split(":", 1)[0].strip()
+        item_label, clearance_label, clearance_type = _describe_journal_entry_for_payment(je)
         _, _, outstanding = _summarise_party_payment_for_journal_entry(je)
         if outstanding > 0:
             results.append(
                 {
                     "journal_entry": je.name,
                     "clearance_type": clearance_type,
+                    "clearance_label": clearance_label,
+                    "item_label": item_label,
                     "amount": totals["disb_total"],  # Aggregate; per-JE if needed
                     "outstanding": outstanding,
                     "date": je.posting_date,
                 }
             )
     return results
+
+
+def _describe_journal_entry_for_payment(je) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    remark = (getattr(je, "user_remark", "") or "").strip()
+    if not remark:
+        return None, None, None
+
+    parts = [part.strip() for part in remark.split("|") if part.strip()]
+    item_label = parts[0] if parts else None
+
+    clearance_label = None
+    for part in parts[1:]:
+        if ":" in part:
+            clearance_label = part
+            break
+    if not clearance_label and len(parts) > 1:
+        clearance_label = parts[1]
+
+    clearance_type = None
+    target = clearance_label or item_label
+    if target and ":" in target:
+        clearance_type = target.split(":", 1)[0].strip()
+    elif clearance_label:
+        clearance_type = clearance_label
+
+    return item_label, clearance_label, clearance_type
 
 
 def _summarise_party_payment_for_journal_entry(je) -> Tuple[float, float, float]:

@@ -1,10 +1,16 @@
 # Copyright (c) 2024, Nelson Mpanju and contributors
 # For license information, please see license.txt
 
+from typing import Optional, Sequence, Union
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
+from clearing.api.journal_entry import (
+    create_child_table_journal_entries,
+    normalize_child_row_selection,
+)
 
 class PortClearance(Document):
     def validate(self):
@@ -94,4 +100,26 @@ def ensure_all_documents_attached(self, type):
             .format(missing_docs_str), frappe.ValidationError
         )
 
-    
+@frappe.whitelist()
+def make_journal_entries(
+    name: str,
+    charges: Union[str, Sequence[str], None] = None,
+    posting_date: Optional[str] = None,
+):
+    if not name:
+        frappe.throw(_("Port Clearance is required."))
+
+    doc = frappe.get_doc("Port Clearance", name)
+    selected = normalize_child_row_selection(charges)
+    if not selected:
+        frappe.throw(_("Please select at least one charge."))
+
+    return create_child_table_journal_entries(
+        doc,
+        table_field="port_charges",
+        selected_names=selected,
+        posting_date=posting_date,
+        label_field="item",
+        journal_field="journal_entry",
+        disbursed_date_field="disbursed_date",
+    )

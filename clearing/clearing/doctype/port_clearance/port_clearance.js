@@ -1,3 +1,5 @@
+frappe.require("/assets/clearing/js/stage_journal.js");
+
 frappe.ui.form.on("Port Clearance", {
   refresh: function (frm) {
     // Fetch the Clearing File document to get its status
@@ -210,6 +212,15 @@ frappe.ui.form.on("Port Clearance", {
         "primary"
       ); // Make the button primary
     }
+  },
+
+  async make_journal(frm) {
+    await frappe.require("/assets/clearing/js/stage_journal.js");
+    await clearing.stageJournal.handle(frm, {
+      tableField: "port_charges",
+      serverMethod:
+        "clearing.clearing.doctype.port_clearance.port_clearance.make_journal_entries",
+    });
   },
 
   attach_documents: function (frm) {

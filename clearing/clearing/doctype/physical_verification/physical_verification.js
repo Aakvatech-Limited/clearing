@@ -1,6 +1,8 @@
 // Copyright (c) 2024, Nelson Mpanju and contributors
 // For license information, please see license.txt
 
+frappe.require("/assets/clearing/js/stage_journal.js");
+
 frappe.ui.form.on("Physical Verification", {
   refresh(frm) {
     // Fetch the Clearing File document to get its status
@@ -146,6 +148,15 @@ frappe.ui.form.on("Physical Verification", {
           }
         });
       }
+    });
+  },
+
+  async make_journal(frm) {
+    await frappe.require("/assets/clearing/js/stage_journal.js");
+    await clearing.stageJournal.handle(frm, {
+      tableField: "physical_charges",
+      serverMethod:
+        "clearing.clearing.doctype.physical_verification.physical_verification.make_journal_entries",
     });
   },
 

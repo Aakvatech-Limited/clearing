@@ -1,8 +1,14 @@
+from typing import Optional, Sequence, Union
+
 import frappe
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import flt
 from clearing.clearing.doctype.port_clearance.port_clearance import ensure_all_documents_attached
+from clearing.api.journal_entry import (
+    create_child_table_journal_entries,
+    normalize_child_row_selection,
+)
 
 
 class TRAClearance(Document):
@@ -54,3 +60,28 @@ class TRAClearance(Document):
         cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
         if cf_status == "Pre-Lodged":
             frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")
+
+
+@frappe.whitelist()
+def make_journal_entries(
+    name: str,
+    charges: Union[str, Sequence[str], None] = None,
+    posting_date: Optional[str] = None,
+):
+    if not name:
+        frappe.throw(_("TRA Clearance is required."))
+
+    doc = frappe.get_doc("TRA Clearance", name)
+    selected = normalize_child_row_selection(charges)
+    if not selected:
+        frappe.throw(_("Please select at least one charge."))
+
+    return create_child_table_journal_entries(
+        doc,
+        table_field="tra_charges",
+        selected_names=selected,
+        posting_date=posting_date,
+        label_field="item",
+        journal_field="journal_entry",
+        disbursed_date_field="disbursed_date",
+    )

@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.utils import flt, nowdate, cstr
-from typing import List, Optional
+from typing import Dict, List, Optional, Sequence, Union
 from clearing.api.utils import (
     get_expense_account,
     get_cash_or_bank_account,
@@ -55,16 +55,6 @@ def create_or_update_journal_entry_for_clearance(doc, method=None):
         ),
         alert=True,
     )
-
-    # Backfill payment date into the clearance document (allow_on_submit field)
-    try:
-        if frappe.db.has_column(doc.doctype, "paid_from"):
-            doc.paid_from = je.posting_date
-            # update without bumping modified timestamp or requiring manual refresh
-            doc.db_set("paid_from", je.posting_date, update_modified=False, commit=True)
-    except Exception:
-        # Non-fatal if field doesn't exist on a particular clearance doctype
-        pass
 
 
 def create_new_journal_entry_for_single_clearance(doc):
@@ -411,6 +401,236 @@ def make_payment_entry_from_journal_entry(
     pe.flags.clearing_je_marker = je.name  # Store the selected JE name
 
     return pe
+
+
+def normalize_child_row_selection(raw: Union[str, Sequence[str], None]) -> List[str]:
+    """Normalise the multi-check payload coming from the client side."""
+    if raw is None:
+        return []
+
+    if isinstance(raw, str):
+        try:
+            parsed = frappe.parse_json(raw)
+        except Exception:
+            frappe.throw(_("Unable to parse the selected charges list."))
+        else:
+            if isinstance(parsed, (list, tuple, set)):
+                values = list(parsed)
+            elif parsed in (None, ""):
+                values = []
+            else:
+                values = [parsed]
+    elif isinstance(raw, (list, tuple, set)):
+        values = list(raw)
+    else:
+        frappe.throw(_("Invalid charges payload."))
+
+    cleaned: List[str] = []
+    for entry in values:
+        if isinstance(entry, str):
+            name = entry.strip()
+        elif isinstance(entry, dict):
+            name = cstr(entry.get("name") or entry.get("value") or "").strip()
+        else:
+            name = cstr(entry).strip()
+        if name:
+            cleaned.append(name)
+
+    unique: List[str] = []
+    seen = set()
+    for name in cleaned:
+        if name in seen:
+            continue
+        seen.add(name)
+        unique.append(name)
+    return unique
+
+
+def get_disbursement_journal_entry_defaults(clearing_file: str) -> Dict[str, object]:
+    if not clearing_file:
+        frappe.throw(_("Clearing File is required"))
+
+    cf = frappe.get_doc("Clearing File", clearing_file)
+
+    company = cf.company or frappe.defaults.get_user_default("Company")
+    if not company:
+        frappe.throw(_("Company is not set on Clearing File {0}").format(clearing_file))
+
+    customer = cf.customer
+    if not customer:
+        frappe.throw(_("Customer is not set on Clearing File {0}").format(clearing_file))
+
+    party_account = get_clearing_receivable_account(company)
+    if not party_account:
+        party_account = get_expense_account("Clearing Charges", company)
+
+    bank_account = get_cash_or_bank_account(company)
+
+    party_account_currency = (
+        frappe.get_cached_value("Account", party_account, "account_currency")
+        if party_account
+        else None
+    )
+    bank_account_currency = None
+    if bank_account:
+        bank_account_currency = frappe.get_cached_value("Account", bank_account, "account_currency")
+
+    return {
+        "company": company,
+        "voucher_type": "Debit Note",
+        "party_type": "Customer",
+        "party": customer,
+        "party_account": party_account,
+        "party_account_currency": party_account_currency,
+        "bank_account": bank_account,
+        "bank_account_currency": bank_account_currency,
+    }
+
+
+def create_child_table_journal_entries(
+    doc,
+    *,
+    table_field: str,
+    selected_names: Sequence[str],
+    posting_date: Optional[str] = None,
+    label_field: str = "item",
+    journal_field: str = "journal_entry",
+    disbursed_date_field: str = "disbursed_date",
+) -> List[Dict[str, str]]:
+    """Create Journal Entries for arbitrary child-table charge rows."""
+    if not doc:
+        frappe.throw(_("Document is required"))
+
+    if doc.docstatus == 2:
+        frappe.throw(_("Cannot create Journal Entries for a cancelled document."))
+
+    clearing_file = getattr(doc, "clearing_file", None)
+    if not clearing_file:
+        frappe.throw(_("Please set a Clearing File before creating a Journal Entry."))
+
+    selected = {name for name in selected_names if isinstance(name, str) and name.strip()}
+    if not selected:
+        frappe.throw(_("Please select at least one charge."))
+
+    defaults = get_disbursement_journal_entry_defaults(clearing_file)
+    party_account = defaults.get("party_account")
+    bank_account = defaults.get("bank_account")
+    if not party_account or not bank_account:
+        frappe.throw(_("Please configure the Receivable and Cash/Bank accounts in Clearing Settings."))
+
+    posting_date = posting_date or nowdate()
+    company = defaults.get("company")
+    voucher_type = defaults.get("voucher_type") or "Debit Note"
+    party_type = defaults.get("party_type")
+    party = defaults.get("party")
+    party_account_currency = defaults.get("party_account_currency")
+    bank_account_currency = defaults.get("bank_account_currency")
+
+    rows = list(doc.get(table_field) or [])
+    if not rows:
+        frappe.throw(_("No charge rows were found on this document."))
+
+    created: List[Dict[str, str]] = []
+    require_save = doc.docstatus == 0
+
+    for row in rows:
+        row_name = getattr(row, "name", None)
+        if not row_name or row_name not in selected:
+            continue
+
+        if getattr(row, journal_field, None):
+            continue
+
+        amount = flt(getattr(row, "amount", 0))
+        if amount <= 0:
+            continue
+
+        header_remark, account_remark = _build_stage_disbursement_remarks(
+            doc, row, label_field
+        )
+
+        je = frappe.new_doc("Journal Entry")
+        je.voucher_type = voucher_type
+        je.posting_date = posting_date
+        je.clearing_file = clearing_file
+        if company:
+            je.company = company
+        if header_remark:
+            je.user_remark = header_remark
+            je.remark = header_remark
+
+        debit_row = {
+            "account": party_account,
+            "party_type": party_type,
+            "party": party,
+            "debit_in_account_currency": amount,
+            "user_remark": account_remark,
+        }
+        if party_account_currency:
+            debit_row["account_currency"] = party_account_currency
+
+        credit_row = {
+            "account": bank_account,
+            "credit_in_account_currency": amount,
+        }
+        if bank_account_currency:
+            credit_row["account_currency"] = bank_account_currency
+        if account_remark:
+            credit_row["user_remark"] = account_remark
+
+        je.set("accounts", [])
+        je.append("accounts", debit_row)
+        je.append("accounts", credit_row)
+        je.insert()
+        je.submit()
+
+        if journal_field:
+            setattr(row, journal_field, je.name)
+        if disbursed_date_field:
+            setattr(row, disbursed_date_field, posting_date)
+
+        if doc.docstatus == 0:
+            require_save = True
+        else:
+            updates = {}
+            if journal_field:
+                updates[journal_field] = je.name
+            if disbursed_date_field:
+                updates[disbursed_date_field] = posting_date
+            if updates and getattr(row, "doctype", None) and getattr(row, "name", None):
+                frappe.db.set_value(row.doctype, row.name, updates, update_modified=False)
+
+        created.append({"charge": row_name, "journal_entry": je.name})
+
+    if require_save and created:
+        doc.save(ignore_permissions=True)
+
+    return created
+
+
+def _build_stage_disbursement_remarks(doc, row, label_field: Optional[str]) -> tuple[str, str]:
+    doc_label = getattr(doc, "doctype", "Clearance")
+    doc_name = (getattr(doc, "name", "") or "").strip()
+    clearing_file = (getattr(doc, "clearing_file", "") or "").strip()
+    label_value = ""
+    if label_field:
+        label_value = (getattr(row, label_field, "") or "").strip()
+
+    account_parts: List[str] = []
+    if doc_name:
+        account_parts.append(f"{doc_label}: {doc_name}")
+    if clearing_file:
+        account_parts.append(f"Clearing File {clearing_file}")
+    account_remark = " | ".join(account_parts)
+
+    header_parts: List[str] = []
+    if label_value:
+        header_parts.append(label_value)
+    if account_remark:
+        header_parts.append(account_remark)
+    header_remark = " | ".join(header_parts)
+
+    return header_remark, account_remark
 
 
 def _coerce_journal_entry_list(journal_entries) -> List[str]:

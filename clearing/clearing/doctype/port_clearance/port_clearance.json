@@ -28,8 +28,8 @@
   "paid_by",
   "section_break_yaiq",
   "port_charges",
+  "make_journal",
   "total_charges",
-  "paid_from",
   "total_charges_section",
   "paid_by_clearing_agent",
   "invoice_paid",
@@ -105,13 +105,6 @@
    "fieldname": "paid_by_clearing_agent",
    "fieldtype": "Check",
    "label": "Paid By Clearing Agent"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "paid_from",
-   "fieldtype": "Date",
-   "label": "Disbursement Date",
-   "read_only": 1
   },
   {
    "bold": 1,
@@ -202,6 +195,7 @@
    "label": "Staff Name"
   },
   {
+   "depends_on": "paid_by_clearing_agent",
    "fieldname": "section_break_yaiq",
    "fieldtype": "Section Break",
    "label": "Paid By Clearing Agent "
@@ -239,12 +233,17 @@
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "AWB/BL No"
+  },
+  {
+   "fieldname": "make_journal",
+   "fieldtype": "Button",
+   "label": "Make Journal"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-27 14:38:15.380679",
+ "modified": "2025-11-07 09:17:52.391870",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

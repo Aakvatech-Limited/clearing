@@ -1,6 +1,8 @@
 // Copyright (c) 2024, Nelson Mpanju and contributors
 // For license information, please see license.txt
 
+frappe.require("/assets/clearing/js/stage_journal.js");
+
 frappe.ui.form.on("Shipping Line Clearance", {
   refresh: function (frm) {
     handleDocumentExpiry(frm);
@@ -81,6 +83,15 @@ frappe.ui.form.on("Shipping Line Clearance", {
     }
 
     await openDocumentAttachmentDialog(frm);
+  },
+
+  async make_journal(frm) {
+    await frappe.require("/assets/clearing/js/stage_journal.js");
+    await clearing.stageJournal.handle(frm, {
+      tableField: "shipping_charges",
+      serverMethod:
+        "clearing.clearing.doctype.shipping_line_clearance.shipping_line_clearance.make_journal_entries",
+    });
   },
 
   clearing_file: function (frm) {

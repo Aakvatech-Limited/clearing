@@ -30,8 +30,8 @@
   "paid_by",
   "section_break_jzrz",
   "shipping_charges",
+  "make_journal",
   "total_charges",
-  "paid_from",
   "total_charges_section",
   "paid_by_clearing_agent",
   "invoice_paid",
@@ -107,13 +107,6 @@
    "fieldname": "paid_by_clearing_agent",
    "fieldtype": "Check",
    "label": "Paid By Clearing Agent"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "paid_from",
-   "fieldtype": "Date",
-   "label": "Disbursement Date",
-   "read_only": 1
   },
   {
    "fieldname": "attach_documents",
@@ -201,6 +194,7 @@
    "label": "Staff Name"
   },
   {
+   "depends_on": "paid_by_clearing_agent",
    "fieldname": "section_break_jzrz",
    "fieldtype": "Section Break",
    "label": "Paid by Clearing Agent"
@@ -250,12 +244,17 @@
    "fieldname": "port_of_loading",
    "fieldtype": "Data",
    "label": "Port of Loading"
+  },
+  {
+   "fieldname": "make_journal",
+   "fieldtype": "Button",
+   "label": "Make Journal"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-05 09:13:51.155106",
+ "modified": "2025-11-07 09:16:56.816225",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

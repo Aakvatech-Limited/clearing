@@ -1,3 +1,5 @@
+frappe.require("/assets/clearing/js/stage_journal.js");
+
 frappe.ui.form.on("TRA Clearance", {
   refresh(frm) {
     // Fetch the Clearing File document to get its status
@@ -126,6 +128,15 @@ frappe.ui.form.on("TRA Clearance", {
         "primary"
       ); // Make the button primary
     }
+  },
+
+  async make_journal(frm) {
+    await frappe.require("/assets/clearing/js/stage_journal.js");
+    await clearing.stageJournal.handle(frm, {
+      tableField: "tra_charges",
+      serverMethod:
+        "clearing.clearing.doctype.tra_clearance.tra_clearance.make_journal_entries",
+    });
   },
 
   attach_documents: function (frm) {

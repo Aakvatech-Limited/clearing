@@ -18,6 +18,8 @@ const HEADLINE_PRIORITY = {
   green: 0,
 };
 
+const CLEARANCE_TYPES = ["TRA Clearance", "Shipping Line Clearance"];
+
 frappe.ui.form.on("Clearing File", {
   refresh: function (frm) {
     reset_headline_messages(frm);
@@ -147,37 +149,58 @@ frappe.ui.form.on("Clearing File", {
             });
           };
 
-          // Show all buttons but enforce starting with TRA Clearance
+          // Allow TRA & Shipping Line to start; require TRA before other clearances
           const requires_tra_first = [
-            "Shipping Line Clearance",
             "Physical Verification",
             "Port Clearance",
           ].includes(doctype);
 
           if (requires_tra_first) {
-            frappe.call({
-              method: "frappe.client.get_list",
-              args: {
-                doctype: "TRA Clearance",
-                filters: { clearing_file: frm.doc.name },
-                limit: 1,
-                fields: ["name"],
-              },
-              callback: function (r) {
-                const has_tra = r.message && r.message.length > 0;
-                if (!has_tra) {
+            if (!CLEARANCE_TYPES.length) {
+              proceed();
+              return;
+            }
+
+            const checkClearance = (index = 0) => {
+              const doctypeToCheck = CLEARANCE_TYPES[index];
+              frappe.call({
+                method: "frappe.client.get_list",
+                args: {
+                  doctype: doctypeToCheck,
+                  filters: { clearing_file: frm.doc.name },
+                  limit: 1,
+                  fields: ["name"],
+                },
+                callback: function (r) {
+                  const hasClearance = r.message && r.message.length > 0;
+                  if (hasClearance) {
+                    proceed();
+                    return;
+                  }
+
+                  const nextIndex = index + 1;
+                  if (nextIndex < CLEARANCE_TYPES.length) {
+                    checkClearance(nextIndex);
+                    return;
+                  }
+
+                  const requiredClearanceLabel = CLEARANCE_TYPES.join(" or ");
+                  const requiredClearancePrompt = CLEARANCE_TYPES.length
+                    ? `a ${requiredClearanceLabel}`
+                    : __("a clearance record");
+
                   frappe.msgprint(
                     __(
-                      "Please create a TRA Clearance for this Clearing File before proceeding to {0}.",
-                      [doctype]
+                      "Please create {0} for this Clearing File before proceeding.",
+                      [requiredClearancePrompt]
                     )
                   );
-                  return;
-                }
-                proceed();
-              },
-              error: () => proceed(), // fallback to let server-side validation handle
-            });
+                },
+                error: () => proceed(), // fallback to let server-side validation handle
+              });
+            };
+
+            checkClearance();
           } else {
             proceed();
           }

@@ -13,6 +13,7 @@
   "column_break_hrtyp",
   "posting_date",
   "delivery_date",
+  "delivered_date",
   "loading_date",
   "address",
   "delivery_location",
@@ -99,7 +100,7 @@
    "fieldname": "delivery_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Delivery Date"
+   "label": "Expected Delivery Date"
   },
   {
    "fetch_from": "clearing_file.customer",
@@ -174,13 +175,18 @@
    "fieldtype": "Data",
    "ignore_user_permissions": 1,
    "label": "Staff Name"
+  },
+  {
+   "fieldname": "delivered_date",
+   "fieldtype": "Date",
+   "label": "Delivered Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-23 08:07:23.602824",
+ "modified": "2025-11-24 08:01:53.688160",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "CF Delivery Note",

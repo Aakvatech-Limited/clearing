@@ -18,6 +18,11 @@
   "assessment_document_section",
   "issue_date",
   "paid_date",
+  "column_break_syoq",
+  "shipment_type",
+  "tansad_number",
+  "total_taxes_amount",
+  "attachment",
   "paid_by_consignee",
   "charge",
   "paid_by",
@@ -227,12 +232,38 @@
    "fieldname": "make_journal",
    "fieldtype": "Button",
    "label": "Make Journal"
+  },
+  {
+   "fieldname": "column_break_syoq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "clearing_file.shipment_type",
+   "fieldname": "shipment_type",
+   "fieldtype": "Data",
+   "label": "Shipment Type"
+  },
+  {
+   "fetch_from": "clearing_file.tansad_no",
+   "fieldname": "tansad_number",
+   "fieldtype": "Data",
+   "label": "TANSAD Number"
+  },
+  {
+   "fieldname": "total_taxes_amount",
+   "fieldtype": "Currency",
+   "label": "Total Taxes Amount"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 09:16:26.264218",
+ "modified": "2025-11-24 09:09:58.587661",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

@@ -110,6 +110,9 @@ frappe.ui.form.on("Shipping Line Clearance", {
       if (frm.doc.port_of_loading) {
         frm.set_value("port_of_loading", "");
       }
+      if (frm.doc.port_of_discharge) {
+        frm.set_value("port_of_discharge", "");
+      }
       return;
     }
 
@@ -134,6 +137,12 @@ frappe.ui.form.on("Shipping Line Clearance", {
           (frm.doc.port_of_loading || "") !== (data.port_of_loading || "")
         ) {
           frm.set_value("port_of_loading", data.port_of_loading || "");
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "port_of_discharge") &&
+          (frm.doc.port_of_discharge || "") !== (data.port_of_discharge || "")
+        ) {
+          frm.set_value("port_of_discharge", data.port_of_discharge || "");
         }
       },
     });

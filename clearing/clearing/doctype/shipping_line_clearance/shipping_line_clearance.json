@@ -10,21 +10,30 @@
  "field_order": [
   "clearing_file",
   "consignee",
-  "container_no",
-  "port_of_loading",
   "isuue_date",
   "delivery_order_expire_date",
   "drop_off_date",
   "container_deposit_amount",
-  "container_deposit_date",
-  "etb",
   "column_break_a2owv",
   "posting_date",
   "status",
-  "awbbl_no",
   "staff_id",
   "staff_name",
   "invoice_received",
+  "shipment_details_section",
+  "shipping_line",
+  "vesselvoyage",
+  "port_of_loading",
+  "port_of_discharge",
+  "column_break_btod",
+  "awbbl_no",
+  "container_no",
+  "number_of_containers",
+  "container_details_section",
+  "etb",
+  "free_days_after_etb",
+  "column_break_wlgm",
+  "container_deposit_date",
   "shipping_charges_paid_by_consignee_section",
   "charge",
   "paid_by",
@@ -168,7 +177,7 @@
    "fieldname": "container_deposit_amount",
    "fieldtype": "Currency",
    "label": "Container Deposit Amount",
-   "reqd": 1
+   "mandatory_depends_on": "container_deposit_date"
   },
   {
    "fieldname": "isuue_date",
@@ -249,12 +258,58 @@
    "fieldname": "make_journal",
    "fieldtype": "Button",
    "label": "Make Journal"
+  },
+  {
+   "fieldname": "shipment_details_section",
+   "fieldtype": "Section Break",
+   "label": "Shipment Details"
+  },
+  {
+   "fieldname": "shipping_line",
+   "fieldtype": "Link",
+   "label": "Shipping Line",
+   "options": "Shipping Line"
+  },
+  {
+   "fetch_from": "clearing_file.voyage_flight_number",
+   "fieldname": "vesselvoyage",
+   "fieldtype": "Data",
+   "label": "Vessel/Voyage"
+  },
+  {
+   "fieldname": "port_of_discharge",
+   "fieldtype": "Data",
+   "label": "Port of Discharge"
+  },
+  {
+   "fieldname": "column_break_btod",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "clearing_file.total_container_summary",
+   "fieldname": "number_of_containers",
+   "fieldtype": "Data",
+   "label": "Number of Containers"
+  },
+  {
+   "fieldname": "container_details_section",
+   "fieldtype": "Section Break",
+   "label": "Container Details"
+  },
+  {
+   "fieldname": "free_days_after_etb",
+   "fieldtype": "Int",
+   "label": "Free Days After ETB"
+  },
+  {
+   "fieldname": "column_break_wlgm",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 09:16:56.816225",
+ "modified": "2025-11-24 08:56:45.525468",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

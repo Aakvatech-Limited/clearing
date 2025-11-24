@@ -24,6 +24,7 @@
   "volume",
   "column_break_3",
   "port_of_loading",
+  "port_of_discharge",
   "trading_country",
   "country_last_consignment",
   "country_of_destination"
@@ -144,12 +145,17 @@
    "fieldname": "port_of_loading",
    "fieldtype": "Data",
    "label": "Port of Loading"
+  },
+  {
+   "fieldname": "port_of_discharge",
+   "fieldtype": "Data",
+   "label": "Port of Discharge"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-05 09:17:49.118242",
+ "modified": "2025-11-24 08:27:13.407077",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Cargo",

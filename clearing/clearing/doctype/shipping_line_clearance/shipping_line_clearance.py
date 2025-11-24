@@ -23,17 +23,6 @@ class ShippingLineClearance(Document):
                 title=_("Invalid Mode of Transport")
             )
 
-        # Enforce process order: require TRA Clearance to exist first
-        if self.clearing_file and not frappe.db.exists(
-            "TRA Clearance", {"clearing_file": self.clearing_file}
-        ):
-            frappe.throw(
-                _(
-                    "Create a TRA Clearance for this Clearing File before proceeding to Shipping Line Clearance."
-                ),
-                title=_("Order Enforcement")
-            )
-
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
         self._update_container_info()
@@ -109,6 +98,8 @@ class ShippingLineClearance(Document):
             self.container_no = data.get("container_no")
         if data.get("port_of_loading") is not None:
             self.port_of_loading = data.get("port_of_loading")
+        if data.get("port_of_discharge") is not None:
+            self.port_of_discharge = data.get("port_of_discharge")
 
 
 @frappe.whitelist()
@@ -124,12 +115,13 @@ def get_cargo_container_data(clearing_file: str | None):
             "parenttype": "Clearing File",
             "parentfield": "cargo_details",
         },
-        fields=["container_number", "port_of_loading"],
+        fields=["container_number", "port_of_loading", "port_of_discharge"],
         order_by="idx asc",
     )
 
     container_numbers = []
     ports = []
+    discharge_ports = []
 
     for row in cargo_rows:
         raw_container = cstr(row.get("container_number")).strip()
@@ -146,12 +138,18 @@ def get_cargo_container_data(clearing_file: str | None):
         if raw_port:
             ports.append(raw_port)
 
+        raw_discharge_port = cstr(row.get("port_of_discharge")).strip()
+        if raw_discharge_port:
+            discharge_ports.append(raw_discharge_port)
+
     container_numbers = _dedupe_preserve_order(container_numbers)
     ports = _dedupe_preserve_order(ports)
+    discharge_ports = _dedupe_preserve_order(discharge_ports)
 
     return {
         "container_no": ", ".join(container_numbers),
         "port_of_loading": ", ".join(ports),
+        "port_of_discharge": ", ".join(discharge_ports),
     }
 
 

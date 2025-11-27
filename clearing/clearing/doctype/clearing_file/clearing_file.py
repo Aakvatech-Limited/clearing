@@ -5,10 +5,12 @@ from frappe.model.document import Document
 from frappe.contacts.doctype.address.address import get_address_display
 from frappe import _
 from frappe.utils import cstr, nowdate
+from erpnext import get_company_currency
 
 
 class ClearingFile(Document):
     def before_save(self):
+        self.set_currency()
         self.update_container_summary()
         # Check and possibly update status, but do not enforce it strictly
         self.check_and_update_status()
@@ -49,6 +51,19 @@ class ClearingFile(Document):
         # Check for unreturned transit bonds when status changes to Delivered
         if self.status == "Delivered":
             self.check_transit_bond_status()
+
+    def set_currency(self):
+        """Align currency with customer default or company currency."""
+        customer_currency = None
+        if self.customer:
+            customer_currency = frappe.get_cached_value("Customer", self.customer, "default_currency")
+
+        company_currency = get_company_currency(self.company) if self.company else None
+        target_currency = customer_currency or company_currency
+
+        current_currency = getattr(self, "currency", None)
+        if target_currency and current_currency != target_currency:
+            self.currency = target_currency
 
     def on_submit(self):
         # Upon submission, mark as Closed

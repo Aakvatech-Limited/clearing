@@ -9,6 +9,7 @@
   "basic_details_section",
   "clearing_file",
   "customer",
+  "currency",
   "mode_of_transport",
   "awbbl_no",
   "column_break_yxf5j",
@@ -119,6 +120,16 @@
    "reqd": 1
   },
   {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
    "default": "0",
    "fieldname": "paid_by_clearing_agent",
    "fieldtype": "Check",
@@ -153,7 +164,8 @@
    "fieldname": "total_charges",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Paid By Clearing Agent"
+   "label": "Total Paid By Clearing Agent",
+   "options": "currency"
   },
   {
    "default": "0",
@@ -185,7 +197,8 @@
   {
    "fieldname": "customs_value",
    "fieldtype": "Currency",
-   "label": "Customs Value (FOB/CIF)"
+   "label": "Customs Value (FOB/CIF)",
+   "options": "currency"
   },
   {
    "depends_on": "paid_by_clearing_agent",
@@ -207,7 +220,8 @@
   {
    "fieldname": "total_paid",
    "fieldtype": "Currency",
-   "label": "Total Paid"
+   "label": "Total Paid",
+   "options": "currency"
   },
   {
    "fieldname": "charge",
@@ -219,7 +233,8 @@
    "fieldname": "paid_by",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Paid By Consignee"
+   "label": "Total Paid By Consignee",
+   "options": "currency"
   },
   {
    "fetch_from": "clearing_file.awbbl_no",
@@ -252,7 +267,8 @@
   {
    "fieldname": "total_taxes_amount",
    "fieldtype": "Currency",
-   "label": "Total Taxes Amount"
+   "label": "Total Taxes Amount",
+   "options": "currency"
   },
   {
    "fieldname": "attachment",
@@ -263,7 +279,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-24 09:09:58.587661",
+ "modified": "2025-11-27 08:31:59.744156",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "TRA Clearance",

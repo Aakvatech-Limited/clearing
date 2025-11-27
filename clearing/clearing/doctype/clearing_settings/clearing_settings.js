@@ -28,14 +28,26 @@ frappe.ui.form.on('Clearing Settings', {
             });
         }
 
-        // Single receivable account to use on Debit Note party rows
-        frm.set_query('clearing_receivable_account', function() {
-            return {
-                filters: {
-                    'account_type': 'Receivable',
-                    'is_group': 0
-                }
+        // Receivable accounts (Table MultiSelect): restrict to leaf Receivable
+        const recvGrid = frm.fields_dict['clearing_receivable_account']?.grid;
+        if (recvGrid && recvGrid.get_field && recvGrid.get_field('account')) {
+            recvGrid.get_field('account').get_query = function() {
+                return {
+                    filters: {
+                        'account_type': 'Receivable',
+                        'is_group': 0
+                    }
+                };
             };
-        });
+        } else {
+            frm.set_query('clearing_receivable_account', function() {
+                return {
+                    filters: {
+                        'account_type': 'Receivable',
+                        'is_group': 0
+                    }
+                };
+            });
+        }
     }
 });

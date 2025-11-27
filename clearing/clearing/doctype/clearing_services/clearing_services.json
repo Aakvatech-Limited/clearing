@@ -39,6 +39,7 @@
    "fetch_from": "reference_number.grand_total",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "options": "currency",
    "label": "Grand Total"
   },
   {
@@ -46,6 +47,7 @@
    "fetch_from": "reference_number.outstanding_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "options": "currency",
    "label": "Outstanding Amount"
   }
  ],

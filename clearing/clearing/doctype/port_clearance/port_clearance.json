@@ -16,6 +16,7 @@
   "date",
   "column_break_dfl0o",
   "posting_date",
+  "currency",
   "consignee",
   "status",
   "consignee_address",
@@ -141,7 +142,8 @@
   {
    "fieldname": "total_charges",
    "fieldtype": "Currency",
-   "label": "Total Charges Paid by Clearing Agent "
+   "label": "Total Charges Paid by Clearing Agent ",
+   "options": "currency"
   },
   {
    "fieldname": "column_break_ayxk7",
@@ -173,6 +175,16 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "depends_on": "has_transit_bond",
@@ -214,7 +226,8 @@
   {
    "fieldname": "total_paid",
    "fieldtype": "Currency",
-   "label": "Total Paid"
+   "label": "Total Paid",
+   "options": "currency"
   },
   {
    "fieldname": "charge",
@@ -225,7 +238,8 @@
   {
    "fieldname": "paid_by",
    "fieldtype": "Currency",
-   "label": "Total Charges Paid By Consignee"
+   "label": "Total Charges Paid By Consignee",
+   "options": "currency"
   },
   {
    "fetch_from": "clearing_file.awbbl_no",
@@ -243,7 +257,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-07 09:17:52.391870",
+ "modified": "2025-11-27 08:32:31.691559",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

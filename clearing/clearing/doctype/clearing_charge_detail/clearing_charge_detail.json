@@ -25,6 +25,7 @@
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "options": "currency",
    "label": "Amount",
    "mandatory_depends_on": "is_invoice",
    "reqd": 1

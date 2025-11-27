@@ -100,6 +100,16 @@
    "label": "Posting Date"
   },
   {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
    "fetch_from": "clearing_file.customer",
    "fieldname": "consignee",
    "fieldtype": "Link",
@@ -312,16 +322,6 @@
   {
    "fieldname": "column_break_wlgm",
    "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "clearing_file.currency",
-   "fetch_if_empty": 1,
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Currency",
-   "options": "Currency",
-   "read_only": 1
   },
   {
    "fieldname": "package_type",

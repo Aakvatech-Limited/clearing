@@ -4,14 +4,19 @@ from frappe.utils import flt
 from typing import List, Optional, Sequence, Tuple
 
 
-def get_expense_account(doctype: str, company: Optional[str]) -> str:
+def get_expense_account(doctype: str, company: Optional[str], currency: Optional[str] = None) -> str:
     """
     Deprecated: previously mapped clearance types to accounts via asset_group_account.
     Now falls back to the configured single receivable account (or Company's default).
     """
-    acc = get_clearing_receivable_account(company)
+    acc = get_clearing_receivable_account(company, currency=currency)
     if not acc and company:
-        acc = frappe.db.get_value("Company", company, "default_receivable_account")
+        acc = frappe.db.get_value(
+            "Company",
+            company,
+            "default_receivable_account",
+            cache=True,
+        )
     if not acc:
         acc = frappe.db.get_value(
             "Account",
@@ -69,25 +74,53 @@ def get_receivable_account(customer, company):
     return receivable_account
 
 
-def get_clearing_receivable_account(company: Optional[str]) -> Optional[str]:
+def get_clearing_receivable_account(company: Optional[str], currency: Optional[str] = None) -> Optional[str]:
     """
-    Return the single Receivable account configured in Clearing Settings.
-    Falls back to Company's default receivable account if not configured.
+    Return a Receivable account configured in Clearing Settings.
+    - When multiple accounts are configured, prefer one matching `currency`.
+    - Falls back to Company's default receivable account if not configured.
     """
     try:
         cs = frappe.get_single("Clearing Settings")
-        acc = cs.get("clearing_receivable_account") if cs else None
     except Exception:
-        acc = None
+        cs = None
 
-    if acc:
-        return acc
+    leaves: List[str] = []
+
+    # Handle Table MultiSelect rows
+    if cs and getattr(cs, "clearing_receivable_account", None):
+        for row in cs.get("clearing_receivable_account") or []:
+            acc_name = getattr(row, "account", None)
+            if not acc_name:
+                continue
+            is_group = frappe.db.get_value("Account", acc_name, "is_group")
+            if is_group == 0:
+                leaves.append(acc_name)
+            else:
+                leaves.extend(
+                    _get_descendant_leaf_accounts(acc_name, company=company, root_type="Asset")
+                )
+
+    # Deduplicate preserving order
+    seen = set()
+    leaves = [x for x in leaves if not (x in seen or seen.add(x))]
+
+    # Prefer matching currency
+    if currency and leaves:
+        for acc in leaves:
+            acc_currency = frappe.db.get_value("Account", acc, "account_currency")
+            if acc_currency == currency:
+                return acc
+
+    if leaves:
+        return leaves[0]
 
     # Fallback to Company's default receivable
     if company:
         fallback = frappe.db.get_value("Company", company, "default_receivable_account")
         if fallback:
-            return fallback
+            if not currency or frappe.db.get_value("Account", fallback, "account_currency") == currency:
+                return fallback
 
     # Absolute fallback: any Receivable leaf
     acc = frappe.db.get_value(

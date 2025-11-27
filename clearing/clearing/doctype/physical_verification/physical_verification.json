@@ -10,6 +10,7 @@
   "awbbl_no",
   "column_break_uyof8",
   "posting_date",
+  "currency",
   "verification_status",
   "status",
   "field_department_section",
@@ -187,6 +188,7 @@
   {
    "fieldname": "total_charges",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Charges Disbursed"
   },
   {
@@ -227,6 +229,15 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
+  },
+  {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "bold": 1,
@@ -282,6 +293,7 @@
   {
    "fieldname": "total_paid",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Paid"
   },
   {
@@ -293,6 +305,7 @@
   {
    "fieldname": "paid_by",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Paid by Consignee"
   },
   {
@@ -319,6 +332,7 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Amount"
   },
   {

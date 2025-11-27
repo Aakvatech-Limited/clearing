@@ -10,6 +10,7 @@
   "posting_date",
   "column_break_hcemj",
   "company",
+  "currency",
   "status",
   "customer_details_section",
   "customer",
@@ -187,6 +188,16 @@
   {
    "fieldname": "column_break_lunna",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "customer.default_currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_abtcq",
@@ -404,7 +415,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-24 07:42:03.034705",
+ "modified": "2025-11-27 08:49:21.589773",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

@@ -16,6 +16,7 @@
   "container_deposit_amount",
   "column_break_a2owv",
   "posting_date",
+  "currency",
   "status",
   "staff_id",
   "staff_name",
@@ -29,6 +30,9 @@
   "awbbl_no",
   "container_no",
   "number_of_containers",
+  "package_type",
+  "weight",
+  "volume",
   "container_details_section",
   "etb",
   "free_days_after_etb",
@@ -144,7 +148,8 @@
    "fieldname": "total_charges",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Paid By Clearing Agent"
+   "label": "Total Paid By Clearing Agent",
+   "options": "currency"
   },
   {
    "fieldname": "total_charges_section",
@@ -177,7 +182,8 @@
    "fieldname": "container_deposit_amount",
    "fieldtype": "Currency",
    "label": "Container Deposit Amount",
-   "mandatory_depends_on": "container_deposit_date"
+   "mandatory_depends_on": "container_deposit_date",
+   "options": "currency"
   },
   {
    "fieldname": "isuue_date",
@@ -223,7 +229,8 @@
   {
    "fieldname": "total_paid",
    "fieldtype": "Currency",
-   "label": "Total Paid"
+   "label": "Total Paid",
+   "options": "currency"
   },
   {
    "fieldname": "charge",
@@ -235,7 +242,8 @@
   {
    "fieldname": "paid_by",
    "fieldtype": "Currency",
-   "label": "Total Paid by Consignee"
+   "label": "Total Paid by Consignee",
+   "options": "currency"
   },
   {
    "fetch_from": "clearing_file.awbbl_no",
@@ -304,12 +312,38 @@
   {
    "fieldname": "column_break_wlgm",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_type",
+   "fieldtype": "Link",
+   "label": "Package Type",
+   "options": "Package Type"
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight"
+  },
+  {
+   "fieldname": "volume",
+   "fieldtype": "Float",
+   "label": "Volume"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-24 08:56:45.525468",
+ "modified": "2025-11-27 10:11:41.807707",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Shipping Line Clearance",

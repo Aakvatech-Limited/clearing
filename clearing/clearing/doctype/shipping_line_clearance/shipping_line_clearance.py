@@ -104,7 +104,7 @@ class ShippingLineClearance(Document):
 
 @frappe.whitelist()
 def get_cargo_container_data(clearing_file: str | None):
-    """Return aggregated container numbers and ports of loading for a Clearing File."""
+    """Return aggregated container numbers, ports, and basic cargo attributes for a Clearing File."""
     if not clearing_file:
         return {}
 
@@ -115,13 +115,17 @@ def get_cargo_container_data(clearing_file: str | None):
             "parenttype": "Clearing File",
             "parentfield": "cargo_details",
         },
-        fields=["container_number", "port_of_loading", "port_of_discharge"],
+        fields=["container_number", "port_of_loading", "port_of_discharge", "package_type", "weight", "volume"],
         order_by="idx asc",
     )
 
     container_numbers = []
     ports = []
     discharge_ports = []
+
+    package_types = []
+    weights = []
+    volumes = []
 
     for row in cargo_rows:
         raw_container = cstr(row.get("container_number")).strip()
@@ -142,14 +146,28 @@ def get_cargo_container_data(clearing_file: str | None):
         if raw_discharge_port:
             discharge_ports.append(raw_discharge_port)
 
+        raw_pkg = cstr(row.get("package_type")).strip()
+        if raw_pkg:
+            package_types.append(raw_pkg)
+
+        weights.append(flt(row.get("weight") or 0))
+        volumes.append(flt(row.get("volume") or 0))
+
     container_numbers = _dedupe_preserve_order(container_numbers)
     ports = _dedupe_preserve_order(ports)
     discharge_ports = _dedupe_preserve_order(discharge_ports)
+
+    package_types = _dedupe_preserve_order([p for p in package_types if p])
+    total_weight = sum(weights) if weights else 0
+    total_volume = sum(volumes) if volumes else 0
 
     return {
         "container_no": ", ".join(container_numbers),
         "port_of_loading": ", ".join(ports),
         "port_of_discharge": ", ".join(discharge_ports),
+        "package_type": ", ".join(package_types),
+        "weight": total_weight,
+        "volume": total_volume,
     }
 
 

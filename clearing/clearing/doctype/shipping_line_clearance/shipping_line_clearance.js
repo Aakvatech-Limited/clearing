@@ -144,6 +144,24 @@ frappe.ui.form.on("Shipping Line Clearance", {
         ) {
           frm.set_value("port_of_discharge", data.port_of_discharge || "");
         }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "package_type") &&
+          (frm.doc.package_type || "") !== (data.package_type || "")
+        ) {
+          frm.set_value("package_type", data.package_type || "");
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "weight") &&
+          (frm.doc.weight || "") !== (data.weight || "")
+        ) {
+          frm.set_value("weight", data.weight || "");
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "volume") &&
+          (frm.doc.volume || "") !== (data.volume || "")
+        ) {
+          frm.set_value("volume", data.volume || "");
+        }
       },
     });
   },

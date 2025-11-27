@@ -13,6 +13,7 @@ from clearing.api.journal_entry import (
     create_child_table_journal_entries,
     normalize_child_row_selection,
 )
+from erpnext import get_company_currency
 
 class ShippingLineClearance(Document):
     def validate(self):
@@ -25,6 +26,8 @@ class ShippingLineClearance(Document):
 
     def before_save(self):
         """Before saving the document, check if invoice is paid and update the status."""
+        self.set_currency()
+        self._set_child_currencies()
         self._update_container_info()
         self.set_total_charges()
         self.set_paid_by_total()
@@ -87,6 +90,32 @@ class ShippingLineClearance(Document):
         cf_status = frappe.db.get_value("Clearing File", self.clearing_file, "status")
         if cf_status == "Pre-Lodged":
             frappe.db.set_value("Clearing File", self.clearing_file, "status", "On Process")
+
+    def set_currency(self):
+        """Sync currency with Clearing File / company currency."""
+        if not self.clearing_file:
+            return
+
+        currency, company = frappe.db.get_value(
+            "Clearing File", self.clearing_file, ["currency", "company"]
+        ) or (None, None)
+
+        if not currency and company:
+            currency = get_company_currency(company)
+
+        current_currency = getattr(self, "currency", None)
+        if currency and current_currency != currency:
+            self.currency = currency
+
+    def _set_child_currencies(self):
+        """Default child table currency to parent currency when empty."""
+        if not self.currency:
+            self.set_currency()
+
+        for table_field in ("shipping_charges", "charge"):
+            for row in self.get(table_field, []):
+                if hasattr(row, "currency") and row.currency != getattr(self, "currency", None):
+                    row.currency = self.currency
 
     def _update_container_info(self):
         """Populate container-related fields from the linked Clearing File cargo details."""

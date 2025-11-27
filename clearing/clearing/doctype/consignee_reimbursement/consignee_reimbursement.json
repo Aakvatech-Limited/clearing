@@ -39,15 +39,17 @@
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "options": "currency",
    "label": "Paid Amount"
   },
   {
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
+   "options": "currency",
    "label": "Outstanding Amount"
   }
- ],
+],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,

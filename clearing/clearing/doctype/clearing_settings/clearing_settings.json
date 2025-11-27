@@ -29,15 +29,15 @@
   {
    "description": "All clearance charges will debit this single party account.",
    "fieldname": "clearing_receivable_account",
-   "fieldtype": "Link",
+   "fieldtype": "Table MultiSelect",
    "label": "Receivable Account",
-   "options": "Account"
+   "options": "Clearing Receivable Account Group"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-10-11 17:46:31.460694",
+ "modified": "2025-11-27 09:40:49.094331",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing Settings",

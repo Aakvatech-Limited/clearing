@@ -9,6 +9,7 @@
  "field_order": [
   "consigee_details_section",
   "clearing_file",
+  "currency",
   "column_break_ahtow",
   "status",
   "consigee",
@@ -64,12 +65,21 @@
    "label": "Consigee Details"
   },
   {
-   "fieldname": "clearing_file",
+  "fieldname": "clearing_file",
+  "fieldtype": "Link",
+  "in_list_view": 1,
+  "label": "Clearing File",
+  "options": "Clearing File",
+  "reqd": 1
+ },
+  {
+   "fetch_from": "clearing_file.currency",
+   "fetch_if_empty": 1,
+   "fieldname": "currency",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Clearing File",
-   "options": "Clearing File",
-   "reqd": 1
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ahtow",
@@ -104,24 +114,28 @@
    "fieldname": "tra_clearance_total",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "TRA Clearance Total"
   },
   {
    "fieldname": "port_clearance_total",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "Port Clearance Total"
   },
   {
    "fieldname": "shipment_clearance_total",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "Shipment Clearance Total"
   },
   {
    "fieldname": "physical_clearance_total",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "Physical Verification Total"
   },
   {
@@ -146,12 +160,14 @@
    "fieldname": "transport_total",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "Transport Total"
   },
   {
    "fieldname": "agency_fee",
    "fieldtype": "Currency",
    "hidden": 1,
+   "options": "currency",
    "label": "Clearing Agency Fee Total"
   },
   {
@@ -159,11 +175,13 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "in_standard_filter": 1,
+   "options": "currency",
    "label": "Total Invoice Charges"
   },
   {
    "fieldname": "total",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Debit Note Charges"
   },
   {
@@ -188,6 +206,7 @@
   {
    "fieldname": "total_clearing_charges",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Clearing Charges"
   },
   {
@@ -204,11 +223,13 @@
   {
    "fieldname": "total_paid_amount",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Reimbursed"
   },
   {
    "fieldname": "total_outstanding_amount",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Outstanding Reimbursement"
   },
   {
@@ -220,6 +241,7 @@
   {
    "fieldname": "balance",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Balance"
   },
   {
@@ -234,11 +256,13 @@
   {
    "fieldname": "total_sales_invoice",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Sales Invoice"
   },
   {
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
+   "options": "currency",
    "label": "Total Outstanding Amount"
   },
   {

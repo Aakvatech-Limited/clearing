@@ -4,6 +4,8 @@
 import frappe
 from frappe import _
 from frappe.utils import flt, nowdate, cstr
+from erpnext import get_company_currency
+from erpnext.setup.utils import get_exchange_rate
 from typing import Dict, List, Optional, Sequence, Union
 from clearing.api.utils import (
     get_expense_account,
@@ -13,6 +15,43 @@ from clearing.api.utils import (
     get_receivable_account,
     infer_party_from_journal_entry,
 )
+
+
+def _find_receivable_account_for_currency(customer: str, company: str, currency: str) -> Optional[str]:
+    """Return a receivable account for the customer/company with the desired currency, if any."""
+    if not (customer and company and currency):
+        return None
+
+    rows = frappe.db.sql(
+        """
+        select pa.account
+        from `tabParty Account` pa
+        join `tabAccount` a on a.name = pa.account
+        where pa.parenttype = 'Customer'
+          and pa.parent = %(customer)s
+          and pa.company = %(company)s
+          and a.account_currency = %(currency)s
+          and a.is_group = 0
+        limit 1
+        """,
+        {"customer": customer, "company": company, "currency": currency},
+        as_dict=True,
+    )
+    if rows:
+        return rows[0]["account"]
+
+    # fallback: any receivable leaf for company with matching currency
+    acc = frappe.db.get_value(
+        "Account",
+        {
+            "company": company,
+            "account_type": "Receivable",
+            "is_group": 0,
+            "account_currency": currency,
+        },
+        "name",
+    )
+    return acc
 
 
 def create_or_update_journal_entry_for_clearance(doc, method=None):
@@ -85,14 +124,67 @@ def create_new_journal_entry_for_single_clearance(doc):
 
     company = je.company
     customer = clearing_file_doc.customer
+    doc_currency = getattr(clearing_file_doc, "currency", None) or getattr(doc, "currency", None)
 
     # Accounts
-    party_account = get_clearing_receivable_account(company) or get_expense_account(
-        doc.doctype, company
+    party_account = get_clearing_receivable_account(company, currency=doc_currency)
+    party_account_currency = (
+        frappe.get_cached_value("Account", party_account, "account_currency")
+        if party_account
+        else None
     )
+
+    if doc_currency and party_account_currency != doc_currency:
+        candidate = _find_receivable_account_for_currency(customer, company, doc_currency)
+        if candidate:
+            party_account = candidate
+            party_account_currency = doc_currency
+        else:
+            frappe.throw(
+                _(
+                    "Receivable account currency ({0}) does not match document currency ({1}). "
+                    "Please set a customer receivable account in currency {1} in Clearing Settings or Party Account."
+                ).format(party_account_currency or _("Unknown"), doc_currency)
+            )
+
+    if not party_account:
+        party_account = get_expense_account(doc.doctype, company, currency=doc_currency)
+        party_account_currency = (
+            frappe.get_cached_value("Account", party_account, "account_currency")
+            if party_account
+            else None
+        )
+
     bank_account = get_cash_or_bank_account(company)
+    bank_account_currency = (
+        frappe.get_cached_value("Account", bank_account, "account_currency")
+        if bank_account
+        else None
+    )
+
+    company_currency = get_company_currency(company) if company else None
+    if doc_currency:
+        je.multi_currency = 1
+    elif company_currency and (
+        (party_account_currency and party_account_currency != company_currency)
+        or (bank_account_currency and bank_account_currency != company_currency)
+    ):
+        je.multi_currency = 1
+
+    party_exchange_rate = 1
+    bank_exchange_rate = 1
+    if company_currency:
+        if party_account_currency and party_account_currency != company_currency:
+            party_exchange_rate = get_exchange_rate(party_account_currency, company_currency, je.posting_date)
+        if bank_account_currency and bank_account_currency != company_currency:
+            bank_exchange_rate = get_exchange_rate(bank_account_currency, company_currency, je.posting_date)
 
     amount = flt(doc.total_charges)
+    amount_in_bank_currency = amount
+    if doc_currency and bank_account_currency and bank_account_currency != doc_currency:
+        amount_in_bank_currency = flt(
+            amount * get_exchange_rate(doc_currency, bank_account_currency, je.posting_date)
+        )
 
     je.append(
         "accounts",
@@ -101,6 +193,7 @@ def create_new_journal_entry_for_single_clearance(doc):
             "party_type": "Customer",
             "party": customer,
             "debit_in_account_currency": amount,
+            "exchange_rate": party_exchange_rate,
             "credit_in_account_currency": 0,
             "user_remark": _("{0}: {1}").format(doc.doctype, doc.name),
         },
@@ -111,7 +204,8 @@ def create_new_journal_entry_for_single_clearance(doc):
         {
             "account": bank_account,
             "debit_in_account_currency": 0,
-            "credit_in_account_currency": amount,
+            "credit_in_account_currency": amount_in_bank_currency,
+            "exchange_rate": bank_exchange_rate,
         },
     )
 
@@ -451,6 +545,7 @@ def get_disbursement_journal_entry_defaults(clearing_file: str) -> Dict[str, obj
         frappe.throw(_("Clearing File is required"))
 
     cf = frappe.get_doc("Clearing File", clearing_file)
+    doc_currency = getattr(cf, "currency", None)
 
     company = cf.company or frappe.defaults.get_user_default("Company")
     if not company:
@@ -460,23 +555,42 @@ def get_disbursement_journal_entry_defaults(clearing_file: str) -> Dict[str, obj
     if not customer:
         frappe.throw(_("Customer is not set on Clearing File {0}").format(clearing_file))
 
-    party_account = get_clearing_receivable_account(company)
-    if not party_account:
-        party_account = get_expense_account("Clearing Charges", company)
-
-    bank_account = get_cash_or_bank_account(company)
-
+    party_account = get_clearing_receivable_account(company, currency=doc_currency)
     party_account_currency = (
         frappe.get_cached_value("Account", party_account, "account_currency")
         if party_account
         else None
     )
+    if doc_currency and party_account_currency != doc_currency:
+        candidate = _find_receivable_account_for_currency(customer, company, doc_currency)
+        if candidate:
+            party_account = candidate
+            party_account_currency = doc_currency
+        else:
+            frappe.throw(
+                _(
+                    "Receivable account currency ({0}) does not match document currency ({1}). "
+                    "Please set a receivable account in currency {1} for this customer/company."
+                ).format(party_account_currency or _("Unknown"), doc_currency)
+            )
+
+    if not party_account:
+        party_account = get_expense_account("Clearing Charges", company, currency=doc_currency)
+        party_account_currency = (
+            frappe.get_cached_value("Account", party_account, "account_currency")
+            if party_account
+            else None
+        )
+
+    bank_account = get_cash_or_bank_account(company)
+
     bank_account_currency = None
     if bank_account:
         bank_account_currency = frappe.get_cached_value("Account", bank_account, "account_currency")
 
     return {
         "company": company,
+        "currency": doc_currency,
         "voucher_type": "Debit Note",
         "party_type": "Customer",
         "party": customer,
@@ -520,15 +634,25 @@ def create_child_table_journal_entries(
 
     posting_date = posting_date or nowdate()
     company = defaults.get("company")
+    company_currency = get_company_currency(company) if company else None
     voucher_type = defaults.get("voucher_type") or "Debit Note"
     party_type = defaults.get("party_type")
     party = defaults.get("party")
     party_account_currency = defaults.get("party_account_currency")
     bank_account_currency = defaults.get("bank_account_currency")
+    doc_currency = defaults.get("currency") or getattr(doc, "currency", None)
 
     rows = list(doc.get(table_field) or [])
     if not rows:
         frappe.throw(_("No charge rows were found on this document."))
+
+    if doc_currency and party_account_currency and party_account_currency != doc_currency:
+        frappe.throw(
+            _(
+                "Receivable account currency ({0}) does not match document currency ({1}). "
+                "Please set a receivable account in currency {1} for this customer/company."
+            ).format(party_account_currency, doc_currency)
+        )
 
     created: List[Dict[str, str]] = []
     require_save = doc.docstatus == 0
@@ -549,21 +673,47 @@ def create_child_table_journal_entries(
             doc, row, label_field
         )
 
+        amount_in_bank_currency = amount
+        if doc_currency and bank_account_currency and bank_account_currency != doc_currency:
+            amount_in_bank_currency = flt(
+                amount * get_exchange_rate(doc_currency, bank_account_currency, posting_date)
+            )
+
         je = frappe.new_doc("Journal Entry")
         je.voucher_type = voucher_type
         je.posting_date = posting_date
         je.clearing_file = clearing_file
         if company:
             je.company = company
+        if doc_currency:
+            je.multi_currency = 1
+        elif company_currency and (
+            (party_account_currency and party_account_currency != company_currency)
+            or (bank_account_currency and bank_account_currency != company_currency)
+        ):
+            je.multi_currency = 1
         if header_remark:
             je.user_remark = header_remark
             je.remark = header_remark
+
+        party_exchange_rate = 1
+        bank_exchange_rate = 1
+        if company_currency:
+            if party_account_currency and party_account_currency != company_currency:
+                party_exchange_rate = get_exchange_rate(
+                    party_account_currency, company_currency, posting_date
+                )
+            if bank_account_currency and bank_account_currency != company_currency:
+                bank_exchange_rate = get_exchange_rate(
+                    bank_account_currency, company_currency, posting_date
+                )
 
         debit_row = {
             "account": party_account,
             "party_type": party_type,
             "party": party,
             "debit_in_account_currency": amount,
+            "exchange_rate": party_exchange_rate,
             "user_remark": account_remark,
         }
         if party_account_currency:
@@ -571,7 +721,8 @@ def create_child_table_journal_entries(
 
         credit_row = {
             "account": bank_account,
-            "credit_in_account_currency": amount,
+            "credit_in_account_currency": amount_in_bank_currency,
+            "exchange_rate": bank_exchange_rate,
         }
         if bank_account_currency:
             credit_row["account_currency"] = bank_account_currency

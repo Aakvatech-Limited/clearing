@@ -16,6 +16,7 @@ from clearing.api.utils import (
     get_clearing_receivable_account,
     get_expense_account,
 )
+from erpnext import get_company_currency
 
 CLEARANCE_SOURCE_NAMES = {
     "TRA Clearance",
@@ -111,6 +112,7 @@ class ClearingCharges(Document):
             )
 
     def before_save(self):
+        self.set_currency()
         self.ensure_primary_service_row(create=True, populate_from_legacy=True)
         if self._should_prompt_for_invoice():
             frappe.msgprint(_("Please generate invoice before printing Debit Note"))
@@ -118,6 +120,22 @@ class ClearingCharges(Document):
         self.fetch_total_charges()
         self.populate_disbursement_and_reimbursement_tables()
         self._compute_reimbursement_totals()
+
+    def set_currency(self):
+        """Keep currency in sync with the linked Clearing File / company."""
+        if not self.clearing_file:
+            return
+
+        currency, company = frappe.db.get_value(
+            "Clearing File", self.clearing_file, ["currency", "company"]
+        ) or (None, None)
+
+        if not currency and company:
+            currency = get_company_currency(company)
+
+        current_currency = getattr(self, "currency", None)
+        if currency and current_currency != currency:
+            self.currency = currency
 
     def get_primary_service_row(self):
         for row in getattr(self, "clearing_services", []):
@@ -1092,7 +1110,7 @@ def make_payment_entry_for_clearing_file(clearing_file: str):
 
     party_type, party = "Customer", cf.customer
     payment_type = "Receive"
-    party_account = get_clearing_receivable_account(company)
+    party_account = get_clearing_receivable_account(company, currency=getattr(cf, "currency", None))
     if not party_account:
         frappe.throw(_("Please configure a Receivable Account in Clearing Settings"))
     bank_account = get_cash_or_bank_account(company)

@@ -2,6 +2,8 @@ frappe.require("/assets/clearing/js/stage_journal.js");
 
 frappe.ui.form.on("Port Clearance", {
   refresh: function (frm) {
+    frm.trigger("populate_cargo_fields");
+
     // Fetch the Clearing File document to get its status
     if (frm.doc.clearing_file) {
       frappe.call({
@@ -214,6 +216,10 @@ frappe.ui.form.on("Port Clearance", {
     }
   },
 
+  clearing_file: function (frm) {
+    frm.trigger("populate_cargo_fields");
+  },
+
   async make_journal(frm) {
     await frappe.require("/assets/clearing/js/stage_journal.js");
     await clearing.stageJournal.handle(frm, {
@@ -389,5 +395,48 @@ frappe.ui.form.on("Port Clearance", {
     };
 
     d.show();
+  },
+
+  populate_cargo_fields: function (frm) {
+    if (frm.doc.docstatus === 1) {
+      return;
+    }
+
+    if (!frm.doc.clearing_file) {
+      if (frm.doc.number_of_packages) {
+        frm.set_value("number_of_packages", "");
+      }
+      if (frm.doc.seal_number) {
+        frm.set_value("seal_number", "");
+      }
+      return;
+    }
+
+    frappe.call({
+      method:
+        "clearing.clearing.doctype.shipping_line_clearance.shipping_line_clearance.get_cargo_container_data",
+      args: { clearing_file: frm.doc.clearing_file },
+      callback(r) {
+        if (!r.message) {
+          return;
+        }
+
+        const data = r.message;
+
+        if (
+          Object.prototype.hasOwnProperty.call(data, "number_of_packages") &&
+          (frm.doc.number_of_packages || "") !==
+            (data.number_of_packages || "")
+        ) {
+          frm.set_value("number_of_packages", data.number_of_packages || "");
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, "seal_number") &&
+          (frm.doc.seal_number || "") !== (data.seal_number || "")
+        ) {
+          frm.set_value("seal_number", data.seal_number || "");
+        }
+      },
+    });
   },
 });

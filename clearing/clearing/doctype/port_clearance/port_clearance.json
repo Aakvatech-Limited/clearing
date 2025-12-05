@@ -20,6 +20,10 @@
   "consignee",
   "status",
   "consignee_address",
+  "section_break_oofj",
+  "number_of_packages",
+  "seal_number",
+  "column_break_zclf",
   "staff_section",
   "staff_id",
   "column_break_kj4eh",
@@ -252,12 +256,30 @@
    "fieldname": "make_journal",
    "fieldtype": "Button",
    "label": "Make Journal"
+  },
+  {
+   "fieldname": "section_break_oofj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "number_of_packages",
+   "fieldtype": "Int",
+   "label": "Number of Packages"
+  },
+  {
+   "fieldname": "seal_number",
+   "fieldtype": "Data",
+   "label": "Seal Number"
+  },
+  {
+   "fieldname": "column_break_zclf",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-27 08:32:31.691559",
+ "modified": "2025-12-03 09:44:52.271640",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Port Clearance",

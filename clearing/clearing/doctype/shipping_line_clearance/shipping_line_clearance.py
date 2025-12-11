@@ -129,6 +129,10 @@ class ShippingLineClearance(Document):
             self.port_of_loading = data.get("port_of_loading")
         if data.get("port_of_discharge") is not None:
             self.port_of_discharge = data.get("port_of_discharge")
+        if data.get("number_of_packages") is not None:
+            self.number_of_packages = data.get("number_of_packages")
+        if data.get("seal_number") is not None:
+            self.seal_number = data.get("seal_number")
 
 
 @frappe.whitelist()
@@ -144,7 +148,16 @@ def get_cargo_container_data(clearing_file: str | None):
             "parenttype": "Clearing File",
             "parentfield": "cargo_details",
         },
-        fields=["container_number", "port_of_loading", "port_of_discharge", "package_type", "weight", "volume"],
+        fields=[
+            "container_number",
+            "port_of_loading",
+            "port_of_discharge",
+            "package_type",
+            "weight",
+            "volume",
+            "number_of_packages",
+            "seal_number",
+        ],
         order_by="idx asc",
     )
 
@@ -155,6 +168,8 @@ def get_cargo_container_data(clearing_file: str | None):
     package_types = []
     weights = []
     volumes = []
+    package_counts = []
+    seal_numbers = []
 
     for row in cargo_rows:
         raw_container = cstr(row.get("container_number")).strip()
@@ -181,14 +196,27 @@ def get_cargo_container_data(clearing_file: str | None):
 
         weights.append(flt(row.get("weight") or 0))
         volumes.append(flt(row.get("volume") or 0))
+        package_counts.append(cint(row.get("number_of_packages") or 0))
+
+        raw_seal = cstr(row.get("seal_number")).strip()
+        if raw_seal:
+            seal_numbers.extend([
+                code
+                for code in (
+                    segment.strip() for segment in re.split(r"[\s,;]+", raw_seal)
+                )
+                if code
+            ])
 
     container_numbers = _dedupe_preserve_order(container_numbers)
     ports = _dedupe_preserve_order(ports)
     discharge_ports = _dedupe_preserve_order(discharge_ports)
+    seal_numbers = _dedupe_preserve_order(seal_numbers)
 
     package_types = _dedupe_preserve_order([p for p in package_types if p])
     total_weight = sum(weights) if weights else 0
     total_volume = sum(volumes) if volumes else 0
+    total_packages = sum(package_counts) if package_counts else 0
 
     return {
         "container_no": ", ".join(container_numbers),
@@ -197,6 +225,8 @@ def get_cargo_container_data(clearing_file: str | None):
         "package_type": ", ".join(package_types),
         "weight": total_weight,
         "volume": total_volume,
+        "number_of_packages": total_packages,
+        "seal_number": ", ".join(seal_numbers),
     }
 
 

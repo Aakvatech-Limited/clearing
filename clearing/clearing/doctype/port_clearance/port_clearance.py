@@ -31,6 +31,7 @@ class PortClearance(Document):
         self.set_total_charges()
         self.set_paid_by_total()
         self.set_total_paid()
+        self._update_cargo_info()
 
         if self.invoice_paid:
             # If the invoice is paid, automatically set the status to 'Payment Completed'
@@ -98,6 +99,19 @@ class PortClearance(Document):
             for row in self.get(table_field, []):
                 if hasattr(row, "currency") and row.currency != getattr(self, "currency", None):
                     row.currency = self.currency
+
+    def _update_cargo_info(self):
+        """Populate cargo-derived fields from the linked Clearing File."""
+        if not self.clearing_file:
+            return
+
+        from clearing.clearing.doctype.shipping_line_clearance import shipping_line_clearance
+
+        data = shipping_line_clearance.get_cargo_container_data(self.clearing_file)
+        if data.get("number_of_packages") is not None:
+            self.number_of_packages = data.get("number_of_packages")
+        if data.get("seal_number") is not None:
+            self.seal_number = data.get("seal_number")
 
 def ensure_all_documents_attached(self, type):
     """Ensure all required documents for the current mode of transport are attached."""

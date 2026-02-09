@@ -1186,32 +1186,64 @@ def handle_invoice_status_change(invoice, event=None):
     if isinstance(invoice, str):
         invoice = frappe.get_doc("Sales Invoice", invoice)
 
-    cc_names = frappe.get_all(
-        "Clearing Services",
-        filters={"reference_number": invoice.name},
-        pluck="parent",
-        distinct=True,
+    cc_names = set(
+        frappe.get_all(
+            "Clearing Services",
+            filters={"reference_number": invoice.name},
+            pluck="parent",
+            distinct=True,
+        )
     )
+    if invoice.clearing_charges and frappe.db.exists(
+        "Clearing Charges", invoice.clearing_charges
+    ):
+        cc_names.add(invoice.clearing_charges)
+
     if not cc_names:
         return
 
     current_status = invoice.status
-    for cc_name in cc_names:
+    for cc_name in sorted(cc_names):
         cc = frappe.get_doc("Clearing Charges", cc_name)
         cc.ensure_primary_service_row(create=True, populate_from_legacy=True)
-        totals = get_payment_progress_for_clearing_file(cc.clearing_file, invoice.name)
-        new_status = cc._compute_status_from_invoice_and_reimbursements(
-            current_status, totals
-        )
-        _update_fields_if_changed("Clearing Charges", cc_name, {"status": new_status})
+
         service_names = frappe.db.get_all(
             "Clearing Services",
             filters={"parent": cc_name, "reference_number": invoice.name},
             pluck="name",
         )
+        if not service_names and cc.docstatus == 0:
+            child = cc.append("clearing_services", {})
+            child.reference_number = invoice.name
+            child.reference_date = invoice.posting_date
+            child.invoice_status = current_status
+            child.grand_total = flt(
+                invoice.rounded_total
+                or invoice.grand_total
+                or invoice.base_rounded_total
+                or invoice.base_grand_total
+                or 0
+            )
+            child.outstanding_amount = flt(invoice.outstanding_amount or 0)
+            cc.save(ignore_permissions=True)
+            service_names = [child.name]
+
+        totals = get_payment_progress_for_clearing_file(cc.clearing_file, invoice.name)
+        new_status = cc._compute_status_from_invoice_and_reimbursements(
+            current_status, totals
+        )
+        _update_fields_if_changed("Clearing Charges", cc_name, {"status": new_status})
         child_updates = {
             "invoice_status": current_status,
             "reference_date": invoice.posting_date,
+            "grand_total": flt(
+                invoice.rounded_total
+                or invoice.grand_total
+                or invoice.base_rounded_total
+                or invoice.base_grand_total
+                or 0
+            ),
+            "outstanding_amount": flt(invoice.outstanding_amount or 0),
         }
         for service_name in service_names:
             _update_fields_if_changed("Clearing Services", service_name, child_updates)
@@ -1219,7 +1251,7 @@ def handle_invoice_status_change(invoice, event=None):
 
     if not invoice.clearing_charges and cc_names:
         _update_fields_if_changed(
-            "Sales Invoice", invoice.name, {"clearing_charges": cc_names[0]}
+            "Sales Invoice", invoice.name, {"clearing_charges": sorted(cc_names)[0]}
         )
 
 

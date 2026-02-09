@@ -109,18 +109,23 @@ frappe.ui.form.on("Clearing Charges", {
 
     await ensure_manual_charge_disbursement_entries(frm);
 
-    frappe.call({
+    const jeResp = await frappe.call({
       method: "clearing.clearing.doctype.clearing_charges.clearing_charges.get_disbursement_journal_entries_detailed",
       args: { clearing_file: frm.doc.clearing_file },
-      callback(r) {
-        const rows = r.message || [];
-        if (!rows.length) {
-          frappe.msgprint(__("No outstanding Journal Entries were found for this Clearing File."));
-          return;
-        }
-        open_payment_dialog(frm, rows);
-      },
     });
+    const jeRows = jeResp.message || [];
+    const invoiceRows = await get_outstanding_service_invoices(frm);
+
+    if (!jeRows.length && !invoiceRows.length) {
+      frappe.msgprint(
+        __(
+          "No outstanding Journal Entries or submitted Sales Invoices were found for this document."
+        )
+      );
+      return;
+    }
+
+    open_payment_dialog(frm, jeRows, invoiceRows);
   },
 });
 
@@ -814,47 +819,29 @@ function open_invoice_dialog(frm, eligibleCharges) {
 }
 
 function create_invoice_from_charges(frm, charges, postingDate, dialog) {
-  const items = charges.map((charge) => ({
-    item_code: charge.charge_type,
-    qty: charge.quantity || 1,
-    rate: flt(charge.amount || 0),
-    amount: flt(charge.amount || 0),
-  }));
+  frappe.model.with_doctype("Sales Invoice", () => {
+    const invoice = frappe.model.get_new_doc("Sales Invoice");
+    invoice.customer = frm.doc.consigee;
+    invoice.posting_date =
+      postingDate ||
+      (frappe.datetime && frappe.datetime.nowdate
+        ? frappe.datetime.nowdate()
+        : undefined);
+    invoice.clearing_charges = frm.doc.name;
+    if (frm.doc.currency) {
+      invoice.currency = frm.doc.currency;
+    }
 
-  frappe.call({
-    method: "frappe.client.insert",
-    args: {
-      doc: {
-        doctype: "Sales Invoice",
-        customer: frm.doc.consigee,
-        items,
-        posting_date: postingDate || frappe.datetime.nowdate(),
-        clearing_charges: frm.doc.name,
-        currency: frm.doc.currency || undefined,
-      },
-    },
-    freeze: true,
-    freeze_message: __("Preparing Sales Invoice..."),
-    callback(r) {
-      if (!r.message) {
-        return;
-      }
-      const invoiceDoc = r.message;
-      dialog.hide();
-      upsert_primary_clearing_service(frm, invoiceDoc);
-      mark_charges_as_invoiced(frm, charges, invoiceDoc);
-      sync_clearing_service_invoice_metrics(frm);
-      frm
-        .save()
-        .then(() => {
-          frappe.msgprint(
-            __("Sales Invoice {0} created successfully as Draft. You can edit and submit it.", [
-              invoiceDoc.name,
-            ])
-          );
-        })
-        .then(() => frm.reload_doc());
-    },
+    charges.forEach((charge) => {
+      const row = frappe.model.add_child(invoice, "Sales Invoice Item", "items");
+      row.item_code = charge.charge_type;
+      row.qty = charge.quantity || 1;
+      row.rate = flt(charge.amount || 0);
+      row.amount = flt(charge.amount || 0);
+    });
+
+    dialog.hide();
+    frappe.set_route("Form", "Sales Invoice", invoice.name);
   });
 }
 
@@ -1088,12 +1075,59 @@ function objects_shallow_equal(a, b) {
   });
 }
 
-function open_payment_dialog(frm, rows) {
+function get_outstanding_service_invoice_total(frm) {
+  return (frm.doc.clearing_services || []).reduce((total, row) => {
+    if (!row || !row.reference_number) {
+      return total;
+    }
+    return total + flt(row.outstanding_amount || 0);
+  }, 0);
+}
+
+function has_outstanding_service_invoices(frm) {
+  return get_outstanding_service_invoice_total(frm) > 0.000001;
+}
+
+async function get_outstanding_service_invoices(frm) {
+  const invoiceNames = Array.from(
+    new Set(
+      (frm.doc.clearing_services || [])
+        .map((row) => (row && row.reference_number ? row.reference_number : null))
+        .filter((name) => !!name)
+    )
+  );
+
+  if (!invoiceNames.length) {
+    return [];
+  }
+
+  const resp = await frappe.call({
+    method: "frappe.client.get_list",
+    args: {
+      doctype: "Sales Invoice",
+      filters: {
+        name: ["in", invoiceNames],
+        docstatus: 1,
+        outstanding_amount: [">", 0],
+      },
+      fields: ["name", "status", "grand_total", "outstanding_amount", "due_date"],
+      limit_page_length: invoiceNames.length,
+    },
+  });
+
+  const rows = resp.message || [];
+  rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  return rows;
+}
+
+function open_payment_dialog(frm, rows, invoiceRows = []) {
+  const includeServiceInvoices = !!invoiceRows.length;
+
   const currency =
     frm.doc.currency ||
     (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency);
 
-  const options = rows.map((row, index) => {
+  const options = rows.map((row) => {
     const outstanding = flt(row.outstanding || 0);
     const labelParts = [row.journal_entry];
     if (row.item_label) {
@@ -1120,49 +1154,99 @@ function open_payment_dialog(frm, rows) {
     rowByName[row.journal_entry] = row;
   });
 
+  const invoiceOptions = invoiceRows.map((row) => {
+    const outstanding = flt(row.outstanding_amount || 0);
+    const formattedOutstanding = format_currency(outstanding, currency);
+    const labelParts = [row.name];
+    labelParts.push(__("Outstanding: {0}", [formattedOutstanding]));
+    if (row.status) {
+      labelParts.push(row.status);
+    }
+    return {
+      label: labelParts.join(" | "),
+      value: row.name,
+      outstanding,
+      checked: false,
+      description: __('Outstanding: {0}', [formattedOutstanding]),
+    };
+  });
+  const invoiceByName = {};
+  invoiceRows.forEach((row) => {
+    invoiceByName[row.name] = row;
+  });
+
   let dialog;
   dialog = new frappe.ui.Dialog({
     title: __("Make Payment"),
     fields: [
       {
         fieldname: "journal_entries",
-        label: __("Journal Entries"),
+        label: includeServiceInvoices
+          ? __("Journal Entries (optional)")
+          : __("Journal Entries"),
         fieldtype: "MultiCheck",
         options: options,
         columns: "20rem",
         select_all: true,
         sort_options: false,
-        reqd: 1,
+        reqd: includeServiceInvoices ? 0 : 1,
+      },
+      {
+        fieldname: "sales_invoices",
+        label: __("Sales Invoices"),
+        fieldtype: "MultiCheck",
+        options: invoiceOptions,
+        columns: "20rem",
+        select_all: false,
+        sort_options: false,
+        reqd: 0,
+        depends_on: includeServiceInvoices ? "eval:1" : "eval:0",
       },
       {
         fieldname: "amount_to_pay",
         label: __("Total Amount to Pay (optional)"),
         fieldtype: "Currency",
-        description: __("Leave blank to pay the full outstanding amount for the selected entries."),
+        description: __(
+          "Leave blank to pay full outstanding for selected Journal Entries and Sales Invoices."
+        ),
       },
     ],
     primary_action_label: __("Proceed"),
     primary_action(values) {
       const selectedValues = (values.journal_entries || []).filter(Boolean);
-      if (!selectedValues.length) {
-        frappe.msgprint(__("Please select at least one Journal Entry."));
+      const selectedInvoices = (values.sales_invoices || []).filter(Boolean);
+      if (!selectedValues.length && !selectedInvoices.length) {
+        frappe.msgprint(
+          __("Please select at least one Journal Entry or Sales Invoice.")
+        );
         return;
       }
 
       const selectedRows = selectedValues
         .map((name) => rowByName[name])
         .filter((row) => !!row);
-      if (!selectedRows.length) {
+      if (selectedValues.length && !selectedRows.length) {
         frappe.msgprint(__("The selected Journal Entries could not be found. Please try again."));
         return;
       }
+      const selectedInvoiceRows = selectedInvoices
+        .map((name) => invoiceByName[name])
+        .filter((row) => !!row);
+      if (selectedInvoices.length && !selectedInvoiceRows.length) {
+        frappe.msgprint(__("The selected Sales Invoices could not be found. Please try again."));
+        return;
+      }
 
-      const totalOutstanding = selectedRows.reduce(
-        (acc, row) => acc + flt(row.outstanding || 0),
-        0
-      );
+      const totalOutstanding =
+        selectedRows.reduce((acc, row) => acc + flt(row.outstanding || 0), 0) +
+        selectedInvoiceRows.reduce(
+          (acc, row) => acc + flt(row.outstanding_amount || 0),
+          0
+        );
       if (totalOutstanding <= 0) {
-        frappe.msgprint(__("The selected Journal Entries have no outstanding balance."));
+        frappe.msgprint(
+          __("The selected Journal Entries and Sales Invoices have no outstanding balance.")
+        );
         return;
       }
 
@@ -1177,12 +1261,16 @@ function open_payment_dialog(frm, rows) {
       }
 
       dialog.hide();
-      const args = { journal_entries: selectedValues };
+      const args = {
+        journal_entries: selectedValues,
+        sales_invoices: selectedInvoices,
+        clearing_charges: frm.doc.name,
+      };
       if (typeof amount === "number" && !Number.isNaN(amount)) {
         args.total_amount = amount;
       }
       frappe.call({
-        method: "clearing.api.journal_entry.make_payment_entry_from_journal_entries",
+        method: "clearing.api.payment_entry.make_payment_entry_from_references",
         args,
         freeze: true,
         freeze_message: __("Preparing Payment Entry..."),

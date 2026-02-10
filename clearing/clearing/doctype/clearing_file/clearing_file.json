@@ -95,7 +95,7 @@
    "fieldname": "shipment_type",
    "fieldtype": "Select",
    "label": "Shipment Type",
-   "options": "Import\nExport",
+   "options": "Import\nExport\nTransit",
    "reqd": 1
   },
   {
@@ -415,7 +415,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-27 08:49:21.589773",
+ "modified": "2025-12-08 07:14:27.319787",
  "modified_by": "Administrator",
  "module": "Clearing",
  "name": "Clearing File",

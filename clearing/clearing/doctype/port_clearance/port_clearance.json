@@ -24,6 +24,8 @@
   "number_of_packages",
   "seal_number",
   "column_break_zclf",
+  "t1_number",
+  "t1_date",
   "staff_section",
   "staff_id",
   "column_break_kj4eh",
@@ -274,11 +276,22 @@
   {
    "fieldname": "column_break_zclf",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "t1_number",
+   "fieldtype": "Data",
+   "label": "T1 Number"
+  },
+  {
+   "fieldname": "t1_date",
+   "fieldtype": "Date",
+   "label": "T1 Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
+ "modified": "2025-12-08 07:13:53.809422",
  "modified": "2025-12-03 09:44:52.271640",
  "modified_by": "Administrator",
  "module": "Clearing",

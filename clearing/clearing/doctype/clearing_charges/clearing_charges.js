@@ -321,6 +321,9 @@ function get_invoice_eligible_charges(frm) {
       if (!charge || !charge.is_invoice) {
         return false;
       }
+      if (!charge.name) {
+        return false;
+      }
       if (charge.invoice_reference) {
         return false;
       }
@@ -328,7 +331,7 @@ function get_invoice_eligible_charges(frm) {
     })
     .map((charge, index) => {
       const idx = charge.idx || index + 1;
-      const key = charge.name || `charge-${idx}`;
+      const key = charge.name;
       const chargeCurrency = currency;
       const formattedAmount = format_currency(flt(charge.amount || 0), chargeCurrency);
       return {
@@ -819,130 +822,38 @@ function open_invoice_dialog(frm, eligibleCharges) {
 }
 
 async function create_invoice_from_charges(frm, charges, postingDate, dialog) {
-  const invoice = frappe.model.get_new_doc("Sales Invoice");
-  const posting =
-    postingDate ||
-    (frappe.datetime && frappe.datetime.nowdate
-      ? frappe.datetime.nowdate()
-      : undefined);
-
-  invoice.customer = frm.doc.consigee;
-  invoice.clearing_charges = frm.doc.name;
-  invoice.posting_date = posting;
-  if (frm.doc.currency) {
-    invoice.currency = frm.doc.currency;
-  }
-  if (Object.prototype.hasOwnProperty.call(invoice, "ignore_pricing_rule")) {
-    invoice.ignore_pricing_rule = 1;
+  const selectedRows = (charges || []).map((row) => row && row.name).filter(Boolean);
+  if (!selectedRows.length || selectedRows.length !== (charges || []).length) {
+    frappe.msgprint(
+      __("Please save the document and ensure selected charge rows are persisted before generating invoice.")
+    );
+    return;
   }
 
-  frappe.dom.freeze(__("Preparing Sales Invoice..."));
   try {
-    let company = null;
-    try {
-      const defaults = await ensure_disbursement_defaults(frm);
-      if (defaults && defaults.company) {
-        company = defaults.company;
-      }
-    } catch (error) {
-      console.error("Failed to fetch invoice company defaults", error);
-    }
-    if (!company && frappe.defaults && typeof frappe.defaults.get_user_default === "function") {
-      company = frappe.defaults.get_user_default("Company");
-    }
-    if (company) {
-      invoice.company = company;
-    }
-
-    let defaultIncomeAccount = null;
-    if (company) {
-      try {
-        const { message } = await frappe.db.get_value(
-          "Company",
-          company,
-          "default_income_account"
-        );
-        defaultIncomeAccount =
-          message && typeof message === "object"
-            ? message.default_income_account
-            : message;
-      } catch (error) {
-        console.error("Failed to fetch company default income account", error);
-      }
-    }
-
-    const missingRows = [];
-    const tasks = [];
-
-    (charges || []).forEach((charge, index) => {
-      const row = frappe.model.add_child(invoice, "Sales Invoice Item", "items");
-      const itemCode = ((charge && charge.charge_type) || "").trim();
-      const qty = flt((charge && charge.quantity) || 1) || 1;
-      const amount = flt((charge && charge.amount) || 0);
-
-      row.item_code = itemCode;
-      row.qty = qty;
-      row.rate = qty ? amount / qty : amount;
-      row.amount = amount;
-
-      if (!itemCode) {
-        missingRows.push(__("Row {0}: missing Item Code", [index + 1]));
-        return;
-      }
-
-      tasks.push(
-        frappe.db
-          .get_value(
-            "Item",
-            itemCode,
-            ["item_name", "description", "sales_uom", "stock_uom"]
-          )
-          .then(({ message }) => {
-            const item = message || {};
-            row.item_name = item.item_name || itemCode;
-            row.description = item.description || item.item_name || itemCode;
-            row.uom = item.sales_uom || item.stock_uom || row.uom || "Nos";
-            row.income_account = row.income_account || defaultIncomeAccount || null;
-
-            const missing = [];
-            if (!row.uom) missing.push(__("UOM"));
-            if (!row.income_account) missing.push(__("Income Account"));
-            if (missing.length) {
-              missingRows.push(__("{0}: {1}", [itemCode, missing.join(", ")]));
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to fetch Item defaults", error);
-            row.item_name = row.item_name || itemCode;
-            row.description = row.description || itemCode;
-            row.uom = row.uom || "Nos";
-            if (!row.income_account && defaultIncomeAccount) {
-              row.income_account = defaultIncomeAccount;
-            }
-
-            const missing = [];
-            if (!row.uom) missing.push(__("UOM"));
-            if (!row.income_account) missing.push(__("Income Account"));
-            if (missing.length) {
-              missingRows.push(__("{0}: {1}", [itemCode, missing.join(", ")]));
-            }
-          })
-      );
+    const response = await frappe.call({
+      method: "clearing.api.sales_invoice.make_sales_invoice_draft",
+      args: {
+        clearing_charges: frm.doc.name,
+        charge_rows: selectedRows,
+        posting_date: postingDate || null,
+      },
+      freeze: true,
+      freeze_message: __("Preparing Sales Invoice..."),
     });
 
-    await Promise.all(tasks);
-    dialog.hide();
-    frappe.set_route("Form", "Sales Invoice", invoice.name);
-
-    if (missingRows.length) {
-      frappe.msgprint(
-        __("Some rows still need required values before Save:<br>{0}", [
-          missingRows.join("<br>"),
-        ])
-      );
+    if (!response.message) {
+      return;
     }
-  } finally {
-    frappe.dom.unfreeze();
+
+    const doclist = frappe.model.sync(response.message);
+    dialog.hide();
+    if (doclist && doclist.length) {
+      frappe.set_route("Form", doclist[0].doctype, doclist[0].name);
+    }
+  } catch (error) {
+    console.error("Failed to prepare Sales Invoice draft", error);
+    frappe.msgprint(__("Unable to prepare Sales Invoice draft. Please try again."));
   }
 }
 

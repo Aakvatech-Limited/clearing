@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.query_builder import DocType
 from frappe.utils import flt, nowdate, cstr
 from erpnext import get_company_currency
 from erpnext.setup.utils import get_exchange_rate
@@ -22,21 +23,21 @@ def _find_receivable_account_for_currency(customer: str, company: str, currency:
     if not (customer and company and currency):
         return None
 
-    rows = frappe.db.sql(
-        """
-        select pa.account
-        from `tabParty Account` pa
-        join `tabAccount` a on a.name = pa.account
-        where pa.parenttype = 'Customer'
-          and pa.parent = %(customer)s
-          and pa.company = %(company)s
-          and a.account_currency = %(currency)s
-          and a.is_group = 0
-        limit 1
-        """,
-        {"customer": customer, "company": company, "currency": currency},
-        as_dict=True,
-    )
+    party_account = DocType("Party Account")
+    account = DocType("Account")
+
+    rows = (
+        frappe.qb.from_(party_account)
+        .inner_join(account)
+        .on(account.name == party_account.account)
+        .select(party_account.account)
+        .where(party_account.parenttype == "Customer")
+        .where(party_account.parent == customer)
+        .where(party_account.company == company)
+        .where(account.account_currency == currency)
+        .where(account.is_group == 0)
+        .limit(1)
+    ).run(as_dict=True)
     if rows:
         return rows[0]["account"]
 

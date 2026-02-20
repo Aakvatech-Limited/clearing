@@ -1,5 +1,7 @@
 import frappe
 from frappe import _
+from frappe.query_builder import DocType
+from frappe.query_builder.functions import Sum
 from frappe.utils import flt
 from typing import List, Optional, Sequence, Tuple
 
@@ -254,17 +256,18 @@ def get_journal_entry_party_summary(je, party_type: Optional[str] = None, party:
                     total += net
     total = abs(total)
 
-    paid = frappe.db.sql(
-        """
-        select sum(ref.allocated_amount)
-        from `tabPayment Entry Reference` ref
-        join `tabPayment Entry` pe on pe.name = ref.parent
-        where pe.docstatus = 1
-          and ref.reference_doctype = 'Journal Entry'
-          and ref.reference_name = %s
-        """,
-        (je.name,),
-    )[0][0] or 0.0
+    payment_entry_reference = DocType("Payment Entry Reference")
+    payment_entry = DocType("Payment Entry")
+    paid_row = (
+        frappe.qb.from_(payment_entry_reference)
+        .inner_join(payment_entry)
+        .on(payment_entry.name == payment_entry_reference.parent)
+        .select(Sum(payment_entry_reference.allocated_amount).as_("paid"))
+        .where(payment_entry.docstatus == 1)
+        .where(payment_entry_reference.reference_doctype == "Journal Entry")
+        .where(payment_entry_reference.reference_name == je.name)
+    ).run(as_dict=True)
+    paid = flt((paid_row[0].get("paid") if paid_row else 0.0) or 0.0)
 
     outstanding = max(total - flt(paid), 0.0)
 

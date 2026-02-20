@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List, Optional
 
 import frappe
@@ -103,6 +104,22 @@ def _normalize_posting_date(posting_date: Optional[str]):
         frappe.throw(_("Invalid posting date: {0}").format(posting_date))
 
 
+def _upsert_clearing_charge_row_marker(invoice, row_names: List[str]):
+    names = [cstr(name).strip() for name in row_names if cstr(name).strip()]
+    if not names:
+        return
+
+    marker = "[CCROW:{0}]".format(",".join(names))
+    remarks = cstr(getattr(invoice, "remarks", "") or "")
+
+    if "[CCROW:" in remarks:
+        remarks = re.sub(r"\[CCROW:[^\]]*\]", marker, remarks).strip()
+    else:
+        remarks = "{0}\n{1}".format(remarks, marker).strip() if remarks else marker
+
+    invoice.remarks = remarks
+
+
 @frappe.whitelist()
 def make_sales_invoice_draft(
     clearing_charges: str, charge_rows=None, posting_date: Optional[str] = None
@@ -114,6 +131,7 @@ def make_sales_invoice_draft(
     cc_doc = frappe.get_doc("Clearing Charges", cc_name)
     company, customer = _resolve_company_and_customer(cc_doc)
     selected_rows = _resolve_selected_charge_rows(cc_doc, charge_rows)
+    selected_row_names = [cstr(row.get("name")).strip() for row in selected_rows]
     posting_date = _normalize_posting_date(posting_date)
 
     invoice = frappe.new_doc("Sales Invoice")
@@ -126,26 +144,36 @@ def make_sales_invoice_draft(
     if invoice.meta.has_field("ignore_pricing_rule"):
         invoice.ignore_pricing_rule = 1
 
-    source_by_item_row: Dict[str, object] = {}
+    source_rows: List[Dict[str, object]] = []
     for src in selected_rows:
         qty = flt(src.get("quantity") or 1)
         if qty <= 0:
             qty = 1
-        item_row = invoice.append(
+        item_code = cstr(src.get("charge_type")).strip()
+        invoice.append(
             "items",
-            {"item_code": cstr(src.get("charge_type")).strip(), "qty": qty},
+            {"item_code": item_code, "qty": qty},
         )
-        source_by_item_row[cstr(item_row.name)] = src
+        source_rows.append(
+            {
+                "item_code": item_code,
+                "qty": qty,
+                "amount": flt(src.get("amount") or 0),
+            }
+        )
 
     # Populate mandatory item defaults (item_name, uom, income_account, etc.)
     invoice.run_method("set_missing_values")
 
     # Lock values from charge rows so price-list logic does not override them.
-    for row in invoice.get("items") or []:
-        src = source_by_item_row.get(cstr(row.name))
-        if not src:
-            continue
-        qty = flt(src.get("quantity") or 1)
+    # Use row order (append order) instead of child row name, because unsaved rows
+    # can have empty/duplicate names before insert.
+    invoice_rows = list(invoice.get("items") or [])
+    for idx, src in enumerate(source_rows):
+        if idx >= len(invoice_rows):
+            break
+        row = invoice_rows[idx]
+        qty = flt(src.get("qty") or 1)
         if qty <= 0:
             qty = 1
         amount = flt(src.get("amount") or 0)
@@ -158,6 +186,6 @@ def make_sales_invoice_draft(
         row.discount_amount = 0
         row.amount = amount
 
+    _upsert_clearing_charge_row_marker(invoice, selected_row_names)
     invoice.run_method("calculate_taxes_and_totals")
     return invoice.as_dict(no_nulls=True)
-

@@ -190,14 +190,12 @@ function ensure_default_invoice_rows(frm) {
 function fetch_clearance_rows(frm, doctype, chargeType) {
   return frappe
     .call({
-      method: "frappe.client.get_list",
+      method:
+        "clearing.clearing.doctype.clearing_charges.clearing_charges.get_clearance_rows_in_target_currency",
       args: {
-        doctype,
-        filters: {
-          clearing_file: frm.doc.clearing_file,
-          paid_by_clearing_agent: 1,
-        },
-        fields: ["name", "total_charges"],
+        doctype: doctype,
+        clearing_file: frm.doc.clearing_file,
+        target_currency: frm.doc.currency || null,
         limit_page_length: 500,
       },
     })
@@ -205,7 +203,7 @@ function fetch_clearance_rows(frm, doctype, chargeType) {
       const rows = r.message || [];
       return rows.map((row) => ({
         charge_type: chargeType,
-        amount: flt(row.total_charges || 0),
+        amount: flt(row.converted_total_charges || 0),
       }));
     })
     .catch(() => []);
@@ -1100,6 +1098,23 @@ function has_outstanding_service_invoices(frm) {
   return get_outstanding_service_invoice_total(frm) > 0.000001;
 }
 
+async function fetch_invoice_currency_snapshots(invoiceNames, targetCurrency) {
+  if (!invoiceNames.length) {
+    return [];
+  }
+
+  const resp = await frappe.call({
+    method:
+      "clearing.clearing.doctype.clearing_charges.clearing_charges.get_sales_invoice_currency_snapshots",
+    args: {
+      invoice_names: invoiceNames,
+      target_currency: targetCurrency || null,
+    },
+  });
+
+  return resp.message || [];
+}
+
 async function get_outstanding_service_invoices(frm) {
   const invoiceNames = Array.from(
     new Set(
@@ -1113,23 +1128,23 @@ async function get_outstanding_service_invoices(frm) {
     return [];
   }
 
-  const resp = await frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "Sales Invoice",
-      filters: {
-        name: ["in", invoiceNames],
-        docstatus: 1,
-        outstanding_amount: [">", 0],
-      },
-      fields: ["name", "status", "grand_total", "outstanding_amount", "due_date"],
-      limit_page_length: invoiceNames.length,
-    },
-  });
+  const rows = await fetch_invoice_currency_snapshots(invoiceNames, frm.doc.currency);
+  const filtered = rows
+    .filter((row) => parseInt(row.docstatus, 10) === 1)
+    .filter((row) => flt(row.outstanding_amount_in_party_currency || 0) > 0)
+    .map((row) => ({
+      name: row.name,
+      status: row.status,
+      due_date: row.due_date,
+      party_account_currency: row.party_account_currency,
+      target_currency: row.target_currency,
+      outstanding_amount: flt(row.outstanding_amount_in_party_currency || 0),
+      outstanding_amount_cc: flt(row.outstanding_amount_in_target_currency || 0),
+      exchange_rate_to_cc: flt(row.exchange_rate_to_target || 0),
+    }));
 
-  const rows = resp.message || [];
-  rows.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-  return rows;
+  filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  return filtered;
 }
 
 function open_payment_dialog(frm, rows, invoiceRows = []) {
@@ -1168,9 +1183,17 @@ function open_payment_dialog(frm, rows, invoiceRows = []) {
 
   const invoiceOptions = invoiceRows.map((row) => {
     const outstanding = flt(row.outstanding_amount || 0);
-    const formattedOutstanding = format_currency(outstanding, currency);
+    const partyCurrency = row.party_account_currency || currency;
+    const formattedOutstanding = format_currency(outstanding, partyCurrency);
+    const convertedOutstanding = format_currency(
+      flt(row.outstanding_amount_cc || 0),
+      currency
+    );
     const labelParts = [row.name];
     labelParts.push(__("Outstanding: {0}", [formattedOutstanding]));
+    if (partyCurrency !== currency) {
+      labelParts.push(__("Clearing Currency: {0}", [convertedOutstanding]));
+    }
     if (row.status) {
       labelParts.push(row.status);
     }
@@ -1179,7 +1202,13 @@ function open_payment_dialog(frm, rows, invoiceRows = []) {
       value: row.name,
       outstanding,
       checked: false,
-      description: __('Outstanding: {0}', [formattedOutstanding]),
+      description:
+        partyCurrency === currency
+          ? __('Outstanding: {0}', [formattedOutstanding])
+          : __(
+              "Outstanding: {0} | Clearing Currency: {1}",
+              [formattedOutstanding, convertedOutstanding]
+            ),
     };
   });
   const invoiceByName = {};
@@ -1352,16 +1381,29 @@ function upsert_primary_clearing_service(frm, invoiceDoc) {
     invoiceDoc.posting_date || frappe.datetime.nowdate()
   );
   frappe.model.set_value(doctype, docname, "invoice_status", invoiceDoc.status || "Draft");
+  const partyCurrency =
+    invoiceDoc.party_account_currency || invoiceDoc.currency || frm.doc.currency;
+  frappe.model.set_value(doctype, docname, "invoice_currency", invoiceDoc.currency || null);
+  frappe.model.set_value(doctype, docname, "party_account_currency", partyCurrency || null);
   if (Object.prototype.hasOwnProperty.call(invoiceDoc, "grand_total")) {
-    frappe.model.set_value(doctype, docname, "grand_total", invoiceDoc.grand_total || 0);
+    const grandTotal = flt(invoiceDoc.grand_total || 0);
+    frappe.model.set_value(doctype, docname, "grand_total_in_party_currency", grandTotal);
+    frappe.model.set_value(doctype, docname, "grand_total", grandTotal);
   }
   const outstanding =
     invoiceDoc.outstanding_amount ??
     invoiceDoc.outstanding_amount_after_payment ??
     null;
   if (outstanding !== null) {
-    frappe.model.set_value(doctype, docname, "outstanding_amount", outstanding);
+    frappe.model.set_value(
+      doctype,
+      docname,
+      "outstanding_amount_in_party_currency",
+      flt(outstanding)
+    );
+    frappe.model.set_value(doctype, docname, "outstanding_amount", flt(outstanding));
   }
+  frappe.model.set_value(doctype, docname, "exchange_rate_to_cc", 1);
   frm.refresh_field("clearing_services");
 }
 
@@ -1385,16 +1427,7 @@ async function sync_clearing_service_invoice_metrics(frm) {
   }
 
   try {
-    const { message } = await frappe.call({
-      method: "frappe.client.get_list",
-      args: {
-        doctype: "Sales Invoice",
-        filters: { name: ["in", invoices] },
-        fields: ["name", "grand_total", "outstanding_amount", "status", "docstatus"],
-        limit_page_length: invoices.length,
-      },
-    });
-
+    const message = await fetch_invoice_currency_snapshots(invoices, frm.doc.currency);
     const dataByName = {};
     (message || []).forEach((invoice) => {
       dataByName[invoice.name] = invoice;
@@ -1431,14 +1464,50 @@ async function sync_clearing_service_invoice_metrics(frm) {
       frappe.model.set_value(
         doctype,
         docname,
+        "reference_date",
+        invoice.posting_date || row.reference_date || frappe.datetime.nowdate()
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
+        "invoice_currency",
+        invoice.invoice_currency || row.invoice_currency || null
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
+        "party_account_currency",
+        invoice.party_account_currency || row.party_account_currency || null
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
+        "grand_total_in_party_currency",
+        flt(invoice.grand_total_in_party_currency || 0)
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
+        "outstanding_amount_in_party_currency",
+        flt(invoice.outstanding_amount_in_party_currency || 0)
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
+        "exchange_rate_to_cc",
+        flt(invoice.exchange_rate_to_target || 0)
+      );
+      frappe.model.set_value(
+        doctype,
+        docname,
         "grand_total",
-        flt(invoice.grand_total || 0)
+        flt(invoice.grand_total_in_target_currency || 0)
       );
       frappe.model.set_value(
         doctype,
         docname,
         "outstanding_amount",
-        flt(invoice.outstanding_amount || 0)
+        flt(invoice.outstanding_amount_in_target_currency || 0)
       );
       frappe.model.set_value(
         doctype,

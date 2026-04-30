@@ -600,6 +600,28 @@ def check_status_change_for_transit_bond(doc, method):
 def update_status_to_cleared(doc, method):
     clearing_file_name = doc.clearing_file
 
+    # For EWD EX Warehouse Declaration, only TRA Clearance submission
+    # is required to mark the Clearing File as Cleared.
+    if doc.doctype == "TRA Clearance":
+        cl_plan = frappe.db.get_value("Clearing File", clearing_file_name, "cl_plan")
+        if cl_plan == "EWD EX Warehouse Declaration":
+            clearing_file_doc = frappe.get_doc("Clearing File", clearing_file_name)
+            status_now = (clearing_file_doc.status or "").strip()
+            needs_save = False
+
+            if status_now != "Cleared":
+                clearing_file_doc.status = "Cleared"
+                status_now = "Cleared"
+                needs_save = True
+
+            if status_now == "Cleared" and not clearing_file_doc.cleared_date:
+                clearing_file_doc.cleared_date = nowdate()
+                needs_save = True
+
+            if needs_save:
+                clearing_file_doc.save()
+            return
+
     # Fetch the Clearing File's mode_of_transport
     mode_of_transport = frappe.db.get_value(
         "Clearing File", clearing_file_name, "mode_of_transport"

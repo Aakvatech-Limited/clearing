@@ -211,7 +211,7 @@ frappe.ui.form.on("Clearing File", {
     }
 
     if (frm.doc.status === "Pre-Lodged" || frm.doc.status === "On Process") {
-      // TRA Clearance
+      // TRA Clearance — always shown at this stage
       handle_clearance_creation(
         "TRA Clearance",
         "TRA Clearance",
@@ -225,56 +225,62 @@ frappe.ui.form.on("Clearing File", {
         "TRA Clearance created successfully"
       );
 
-      // Shipping Line Clearance (show regardless, server will enforce order)
-      if (frm.doc.mode_of_transport !== "Air") {
+      // EWD EX Warehouse Declaration: TRA Clearance is the only required step.
+      // Skip Shipping Line / Physical Verification / Port Clearance buttons.
+      const isEWD = frm.doc.cl_plan === "EWD EX Warehouse Declaration";
+
+      if (!isEWD) {
+        // Shipping Line Clearance (show regardless, server will enforce order)
+        if (frm.doc.mode_of_transport !== "Air") {
+          handle_clearance_creation(
+            "Shipping Line Clearance",
+            "Shipping Line Clearance",
+            { clearing_file: frm.doc.name },
+            {
+              doctype: "Shipping Line Clearance",
+              clearing_file: frm.doc.name,
+              customer: frm.doc.customer,
+              status: "Unpaid",
+            },
+            "Shipping Line Clearance created successfully"
+          );
+        }
+
+        // Physical Verification
         handle_clearance_creation(
-          "Shipping Line Clearance",
-          "Shipping Line Clearance",
+          "Physical Verification",
+          "Physical Verification",
           { clearing_file: frm.doc.name },
           {
-            doctype: "Shipping Line Clearance",
+            doctype: "Physical Verification",
             clearing_file: frm.doc.name,
             customer: frm.doc.customer,
-            status: "Unpaid",
+            status: "Payment Pending",
           },
-          "Shipping Line Clearance created successfully"
+          "Physical Verification created successfully"
         );
-      }
 
-      // Physical Verification
-      handle_clearance_creation(
-        "Physical Verification",
-        "Physical Verification",
-        { clearing_file: frm.doc.name },
-        {
-          doctype: "Physical Verification",
+        // Port Clearance
+        let port_clearance_data = {
+          doctype: "Port Clearance",
           clearing_file: frm.doc.name,
           customer: frm.doc.customer,
-          status: "Payment Pending",
-        },
-        "Physical Verification created successfully"
-      );
+          status: "Unpaid",
+        };
 
-      // Port Clearance
-      let port_clearance_data = {
-        doctype: "Port Clearance",
-        clearing_file: frm.doc.name,
-        customer: frm.doc.customer,
-        status: "Unpaid",
-      };
+        // Auto-check has_transit_bond for IM8 declaration type
+        if (frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
+          port_clearance_data.has_transit_bond = 1;
+        }
 
-      // Auto-check has_transit_bond for IM8 declaration type
-      if (frm.doc.declaration_type === "IM8 TRANSIT AND TRANSHIPMENT") {
-        port_clearance_data.has_transit_bond = 1;
+        handle_clearance_creation(
+          "Port Clearance",
+          "Port Clearance",
+          { clearing_file: frm.doc.name },
+          port_clearance_data,
+          "Port Clearance created successfully"
+        );
       }
-
-      handle_clearance_creation(
-        "Port Clearance",
-        "Port Clearance",
-        { clearing_file: frm.doc.name },
-        port_clearance_data,
-        "Port Clearance created successfully"
-      );
     }
 
     frm.fields_dict.mode_of_transport.df.onchange = () => {

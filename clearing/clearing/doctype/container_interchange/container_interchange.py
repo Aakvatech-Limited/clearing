@@ -12,8 +12,6 @@ class ContainerInterchange(Document):
 		self.validate_shipping_line_deposit()
 
 	def validate_shipping_line_deposit(self):
-		"""Block submission if no container deposit is recorded in the Shipping Line Clearance,
-		or if a deposit exists but the refund has not been updated on this Container Interchange."""
 		if not self.clearing_file:
 			return
 
@@ -24,12 +22,7 @@ class ContainerInterchange(Document):
 		)
 
 		if not flt(deposit_amount):
-			frappe.throw(
-				_(
-					"Cannot submit Container Interchange because no Container Deposit Amount "
-					"is recorded in the Shipping Line Clearance for Clearing File {0}."
-				).format(self.clearing_file)
-			)
+			return
 
 		if not self.refund or not flt(self.refund_amount) or not self.refund_date:
 			frappe.throw(

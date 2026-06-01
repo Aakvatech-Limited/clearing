@@ -528,8 +528,8 @@ Maintainer information found in repository metadata:
 
 | Field | Value |
 |---|---|
-| Publisher | Nelson Mpanju |
-| Email | nelsonnorbert87@gmail.com |
+| Publisher | Aakvatech Limited |
+| Email | info@aakvatech.com |
 | License | MIT |
 
 ## Contributing
@@ -556,5 +556,5 @@ MIT. See `license.txt`.
 
 ## Maintainers
 
-Nelson Mpanju  
-nelsonnorbert87@gmail.com
+Aakvatech Limited
+info@aakvatech.com
